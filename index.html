@@ -1,0 +1,181 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowDown, Server, Monitor, FileText, FileCode } from 'lucide-react';
+
+const serverContent = {
+  html: `
+<nav id="menu">
+  <ul>
+    <li>Home</li>
+    <li>About</li>
+    <li>Contact</li>
+  </ul>
+</nav>
+<main>
+  <h1>Welcome!</h1>
+  <p>This is a simple example of how websites are served.</p>
+  <button id="toggleColor">Toggle Menu Color</button>
+</main>`,
+
+  css: `
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  background-color: #007acc;
+  padding: 10px;
+  transition: background-color 0.3s;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  color: white;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  color: #333;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px;
+  cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+}`,
+
+  js: `
+document.querySelector("#menu").style.backgroundColor = "#007acc";
+document.querySelector("#toggleColor").onclick = function() {
+  const menu = document.querySelector("#menu");
+  menu.style.backgroundColor = menu.style.backgroundColor === "green" ? "#007acc" : "green";
+};
+console.log("Interactive JS loaded!");`,
+};
+
+export default function WebsiteServerDemo() {
+  const [fetched, setFetched] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState(null);
+  const [consoleLogs, setConsoleLogs] = useState([]);
+  const [popupContent, setPopupContent] = useState(null);
+
+  const fetchData = () => {
+    setFetched(true);
+    setConsoleLogs(prev => [
+      ...prev,
+      "GET / HTTP/1.1",
+      "Host: example.com",
+      "User-Agent: BrowserSimulator/1.0",
+      "Accept: text/html,application/xhtml+xml",
+      "",
+      "HTTP/1.1 200 OK",
+      "Content-Type: text/html; charset=UTF-8",
+      "Server: MockServer/1.0",
+      "",
+      serverContent.html,
+      serverContent.css,
+      serverContent.js,
+      "Components received and rendered in browser"
+    ]);
+  };
+
+  useEffect(() => {
+    let script;
+    if (fetched) {
+      script = document.createElement("script");
+      script.innerHTML = serverContent.js;
+      document.body.appendChild(script);
+    }
+    return () => {
+      if (script) document.body.removeChild(script);
+    };
+  }, [fetched]);
+
+  const handleComponentClick = (component) => {
+    setSelectedComponent(component);
+    setPopupContent(serverContent[component]);
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-8 p-10 bg-gray-50 min-h-screen">
+      <h2 className="text-3xl font-bold text-gray-700">Understanding Website Serving</h2>
+
+      <div className="grid grid-cols-3 gap-8 items-start">
+        <Card className="text-center shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex justify-center gap-2 items-center">
+              <Server /> Server
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <div onClick={() => handleComponentClick('html')} className="flex items-center gap-2 text-blue-500 cursor-pointer hover:underline"><FileText /> index.html</div>
+            <div onClick={() => handleComponentClick('css')} className="flex items-center gap-2 text-purple-500 cursor-pointer hover:underline"><FileCode /> styles.css</div>
+            <div onClick={() => handleComponentClick('js')} className="flex items-center gap-2 text-yellow-500 cursor-pointer hover:underline"><FileCode /> script.js</div>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col items-center justify-center">
+          <Button onClick={fetchData} size="lg" className="shadow-md">
+            Request Components
+            <ArrowDown className="ml-2" />
+          </Button>
+        </div>
+
+        <Card className="text-center shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex justify-center gap-2 items-center">
+              <Monitor /> Browser
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {fetched ? (
+              <div className="border rounded-lg shadow overflow-hidden">
+                <style>{serverContent.css}</style>
+                <div dangerouslySetInnerHTML={{ __html: serverContent.html }}></div>
+              </div>
+            ) : (
+              <p className="text-gray-400">Content loads here after fetching.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="w-full max-w-4xl shadow-xl">
+        <CardHeader>
+          <CardTitle>Console Log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-black text-green-400 font-mono text-xs p-4 rounded h-64 overflow-auto whitespace-pre-wrap">
+            {consoleLogs.join('\n\n')}
+          </div>
+        </CardContent>
+      </Card>
+
+      {popupContent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-xl max-w-2xl overflow-auto max-h-[80vh]">
+            <pre>{popupContent}</pre>
+            <Button onClick={() => setPopupContent(null)} className="mt-4">Close</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
