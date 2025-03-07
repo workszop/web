@@ -4,90 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Understanding Website Serving</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    /* Server-provided CSS */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    nav {
-      background-color: #007acc;
-      padding: 10px;
-      transition: background-color 0.3s;
-    }
-
-    nav ul {
-      list-style: none;
-      display: flex;
-      gap: 20px;
-      color: white;
-      justify-content: center;
-      margin: 0;
-      padding: 0;
-    }
-
-    main {
-      padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #333;
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-
-    button {
-      margin-top: 10px;
-      padding: 10px;
-      cursor: pointer;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-    }
+    body { font-family: Arial, sans-serif; }
+    nav { background-color: #007acc; padding: 10px; transition: background-color 0.3s; }
+    nav ul { list-style: none; display: flex; gap: 20px; color: white; justify-content: center; margin: 0; padding: 0; }
+    main { padding: 20px; text-align: center; }
+    button { margin-top: 10px; padding: 10px; cursor: pointer; background-color: #4caf50; color: white; border: none; border-radius: 5px; }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col items-center gap-8 p-10">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center gap-8 p-10">
 
-  <h2 class="text-3xl font-bold text-gray-700">Understanding Website Serving</h2>
+  <h2 class="text-3xl font-bold text-gray-800">Understanding Website Serving</h2>
 
-  <div class="grid grid-cols-3 gap-8 items-start">
+  <div class="grid grid-cols-3 gap-8 items-start w-full max-w-5xl">
 
-    <div class="text-center shadow-xl rounded bg-white p-4">
-      <h3 class="font-bold text-xl mb-4">Server</h3>
-      <div id="html" class="cursor-pointer text-blue-500 hover:underline">index.html</div>
-      <div id="css" class="cursor-pointer text-purple-500 hover:underline">styles.css</div>
-      <div id="js" class="cursor-pointer text-yellow-500 hover:underline">script.js</div>
+    <div class="bg-gradient-to-br from-blue-50 to-gray-100 text-center shadow-2xl rounded-xl p-6">
+      <h3 class="font-bold text-2xl mb-4 text-gray-700">Server</h3>
+      <div id="html" class="cursor-pointer text-blue-600 hover:underline">index.html</div>
+      <div id="css" class="cursor-pointer text-purple-600 hover:underline">styles.css</div>
+      <div id="js" class="cursor-pointer text-yellow-600 hover:underline">script.js</div>
     </div>
 
-    <div class="flex justify-center items-center">
-      <button id="fetch-btn" class="bg-blue-500 text-white p-2 rounded shadow">Request Components</button>
+    <div class="flex flex-col justify-center items-center gap-4">
+      <button id="fetch-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-600">example.com</button>
+      <button id="reset-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-600">reset</button>
     </div>
 
-    <div class="text-center shadow-xl rounded bg-white p-4">
-      <h3 class="font-bold text-xl mb-4">Browser</h3>
-      <div id="browser-content" class="border rounded-lg shadow overflow-hidden p-4 text-gray-400">
+    <div class="bg-gradient-to-br from-blue-50 to-gray-100 text-center shadow-2xl rounded-xl p-6">
+      <h3 class="font-bold text-2xl mb-4 text-gray-700">Browser</h3>
+      <div id="browser-content" class="border-2 border-gray-200 rounded-xl shadow-inner p-4 text-gray-500 min-h-[100px]">
         Content loads here after fetching.
       </div>
     </div>
+
   </div>
 
-  <div class="w-full max-w-4xl shadow-xl bg-white rounded">
-    <h3 class="font-bold text-xl p-4">Console Log</h3>
-    <div id="console-log" class="bg-black text-green-400 font-mono text-xs p-4 rounded h-64 overflow-auto whitespace-pre-wrap"></div>
+  <div class="w-full max-w-5xl shadow-2xl bg-white rounded-xl">
+    <h3 class="font-bold text-xl p-4 border-b border-gray-200">Console Log</h3>
+    <div id="console-log" class="bg-black text-green-400 font-mono text-xs p-4 rounded-b-xl h-64 overflow-auto whitespace-pre-wrap"></div>
   </div>
 
-  <div id="popup" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 hidden">
-    <div class="bg-white p-6 rounded shadow-xl max-w-2xl overflow-auto max-h-[80vh]">
-      <pre id="popup-content"></pre>
-      <button id="close-popup" class="bg-gray-500 text-white p-2 rounded mt-4">Close</button>
+  <div id="popup" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 hidden">
+    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-3xl overflow-auto max-h-[80vh] relative">
+      <pre id="popup-content" class="text-sm text-gray-800"></pre>
+      <button id="close-popup" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full shadow-lg hover:bg-red-600">Close</button>
     </div>
   </div>
 
 <script>
+let injectedScript = null;
+
 const serverContent = {
   html: `
 <nav id="menu">
@@ -106,7 +73,6 @@ const serverContent = {
   css: document.querySelector('style').innerText,
 
   js: `
-document.querySelector("#menu").style.backgroundColor = "#007acc";
 document.querySelector("#toggleColor").onclick = function() {
   const menu = document.querySelector("#menu");
   menu.style.backgroundColor = menu.style.backgroundColor === "green" ? "#007acc" : "green";
@@ -116,6 +82,7 @@ console.log("Interactive JS loaded!");`
 
 const logs = [];
 const fetchBtn = document.querySelector('#fetch-btn');
+const resetBtn = document.querySelector('#reset-btn');
 const consoleLog = document.querySelector('#console-log');
 const browserContent = document.querySelector('#browser-content');
 
@@ -139,15 +106,17 @@ fetchBtn.onclick = () => {
   consoleLog.textContent = logs.join('\n\n');
   browserContent.innerHTML = `<style>${serverContent.css}</style>` + serverContent.html;
 
-  const script = document.createElement('script');
-  script.innerHTML = serverContent.js;
-  document.body.appendChild(script);
+  if (injectedScript) injectedScript.remove();
+  injectedScript = document.createElement('script');
+  injectedScript.innerHTML = serverContent.js;
+  document.body.appendChild(injectedScript);
 };
+
+resetBtn.onclick = () => location.reload();
 
 document.querySelectorAll('#html, #css, #js').forEach(elem => {
   elem.onclick = () => {
-    const content = serverContent[elem.id];
-    document.querySelector('#popup-content').textContent = content;
+    document.querySelector('#popup-content').textContent = serverContent[elem.id];
     document.querySelector('#popup').classList.remove('hidden');
   };
 });
