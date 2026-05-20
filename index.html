@@ -1,130 +1,1344 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Understanding Website Serving</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebLab - jak przeglądarka pobiera i renderuje stronę</title>
   <style>
-    body { font-family: Arial, sans-serif; }
-    nav { background-color: #007acc; padding: 10px; transition: background-color 0.3s; }
-    nav ul { list-style: none; display: flex; gap: 20px; color: white; justify-content: center; margin: 0; padding: 0; }
-    main { padding: 20px; text-align: center; }
-    button { margin-top: 10px; padding: 10px; cursor: pointer; background-color: #4caf50; color: white; border: none; border-radius: 5px; }
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --ink: #17202a;
+      --muted: #5b6776;
+      --line: #d9e0e8;
+      --accent: #0f766e;
+      --accent-2: #2563eb;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --ok: #15803d;
+      --shadow: 0 12px 30px rgba(23, 32, 42, 0.08);
+      --radius: 8px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(15, 118, 110, 0.06), transparent 260px),
+        var(--bg);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 700;
+      transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 3px solid rgba(15, 118, 110, 0.18);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(1480px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      padding: 8px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 56px);
+      line-height: 0.95;
+      letter-spacing: 0;
+      max-width: 820px;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(110px, 1fr));
+      gap: 10px;
+      min-width: 380px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 4px 18px rgba(23, 32, 42, 0.04);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink);
+      font-size: 23px;
+      line-height: 1;
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr) 360px;
+      gap: 18px;
+      margin-top: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .panel-subtitle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-soft);
+      color: var(--ink);
+      padding: 10px 11px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .range-meta,
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toggle-row {
+      justify-content: flex-start;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .toggle-row input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      padding: 11px 14px;
+    }
+
+    .secondary {
+      padding: 11px 14px;
+    }
+
+    .scenario-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .scenario {
+      width: 100%;
+      padding: 10px 12px;
+      text-align: left;
+      color: var(--muted);
+      font-weight: 700;
+      border-radius: 6px;
+    }
+
+    .scenario.active {
+      border-color: rgba(15, 118, 110, 0.32);
+      background: rgba(15, 118, 110, 0.08);
+      color: var(--accent);
+    }
+
+    .stage {
+      min-height: 680px;
+      overflow: hidden;
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 94px;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-soft);
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--line);
+    }
+
+    .step.active::before {
+      background: var(--accent-2);
+    }
+
+    .step.done::before {
+      background: var(--ok);
+    }
+
+    .step.error::before {
+      background: var(--danger);
+    }
+
+    .step-index {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .step.done .step-index {
+      color: white;
+      border-color: var(--ok);
+      background: var(--ok);
+    }
+
+    .step.active .step-index {
+      color: white;
+      border-color: var(--accent-2);
+      background: var(--accent-2);
+    }
+
+    .step.error .step-index {
+      color: white;
+      border-color: var(--danger);
+      background: var(--danger);
+    }
+
+    .step h3 {
+      margin: 0 0 3px;
+      font-size: 15px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .step-time {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .diagram {
+      display: grid;
+      grid-template-columns: 1fr 70px 1fr 70px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--surface), var(--surface-soft));
+    }
+
+    .node {
+      min-height: 140px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .node-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .node-screen {
+      min-height: 76px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #eef2f7;
+      padding: 9px;
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+    }
+
+    .mini-window {
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      background: white;
+      overflow: hidden;
+    }
+
+    .mini-bar {
+      height: 16px;
+      background: #e2e8f0;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 0 6px;
+    }
+
+    .mini-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+
+    .mini-content {
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .mini-line {
+      height: 7px;
+      border-radius: 999px;
+      background: #cbd5e1;
+    }
+
+    .mini-line.short {
+      width: 55%;
+    }
+
+    .mini-line.accent {
+      width: 72%;
+      background: rgba(15, 118, 110, 0.42);
+    }
+
+    .packet {
+      height: 42px;
+      border: 1px solid rgba(37, 99, 235, 0.28);
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.08);
+      display: grid;
+      place-items: center;
+      color: var(--accent-2);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .arrow {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .arrow-line {
+      width: 100%;
+      height: 2px;
+      background: var(--line);
+      position: relative;
+    }
+
+    .arrow-line::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      border-left: 8px solid var(--line);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .details {
+      display: grid;
+      gap: 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-soft);
+    }
+
+    .tab {
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      color: white;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .codebox {
+      min-height: 210px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #0f172a;
+      color: #d7e2ef;
+      padding: 14px;
+      overflow: auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .explain {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-soft);
+      padding: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .waterfall {
+      display: grid;
+      gap: 10px;
+    }
+
+    .water-row {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr) 56px;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .bar {
+      height: 12px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width 240ms ease;
+    }
+
+    .log {
+      height: 215px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #111827;
+      color: #d1fae5;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .log p {
+      margin: 0 0 8px;
+    }
+
+    .glossary {
+      display: grid;
+      gap: 10px;
+    }
+
+    .term {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 11px;
+      background: var(--surface-soft);
+    }
+
+    .term strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .term span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .browser-preview {
+      min-height: 245px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .browser-top {
+      height: 34px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 10px;
+      background: #edf2f7;
+    }
+
+    .browser-address {
+      flex: 1;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      background: white;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 9px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rendered-page {
+      min-height: 210px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .skeleton {
+      height: 14px;
+      border-radius: 999px;
+      background: #e2e8f0;
+    }
+
+    .render-card {
+      border: 1px solid rgba(15, 118, 110, 0.18);
+      border-radius: 8px;
+      background: rgba(15, 118, 110, 0.06);
+      padding: 14px;
+    }
+
+    .render-card h2 {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .render-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .resource-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .resource {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .resource.done {
+      color: var(--ok);
+      border-color: rgba(21, 128, 61, 0.2);
+      background: rgba(21, 128, 61, 0.06);
+    }
+
+    .quiz {
+      display: grid;
+      gap: 10px;
+    }
+
+    .quiz button {
+      padding: 10px;
+      text-align: left;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .quiz button.correct {
+      border-color: rgba(21, 128, 61, 0.3);
+      background: rgba(21, 128, 61, 0.08);
+      color: var(--ok);
+    }
+
+    .quiz button.incorrect {
+      border-color: rgba(185, 28, 28, 0.3);
+      background: rgba(185, 28, 28, 0.08);
+      color: var(--danger);
+    }
+
+    @media (max-width: 1180px) {
+      .topbar,
+      .workbench {
+        grid-template-columns: 1fr;
+      }
+
+      .scoreboard {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 780px) {
+      .app {
+        width: min(100% - 20px, 1480px);
+        padding-top: 12px;
+      }
+
+      .scoreboard,
+      .diagram,
+      .step,
+      .action-row {
+        grid-template-columns: 1fr;
+      }
+
+      .arrow {
+        display: none;
+      }
+
+      .stage {
+        min-height: auto;
+      }
+    }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center gap-8 p-10">
-
-  <h2 class="text-3xl font-bold text-gray-800">Understanding Website Serving</h2>
-
-  <div class="grid grid-cols-3 gap-8 items-start w-full max-w-5xl">
-
-    <div class="bg-gradient-to-br from-blue-50 to-gray-100 text-center shadow-2xl rounded-xl p-6">
-      <h3 class="font-bold text-2xl mb-4 text-gray-700">Server</h3>
-      <div id="html" class="cursor-pointer text-blue-600 hover:underline">index.html</div>
-      <div id="css" class="cursor-pointer text-purple-600 hover:underline">styles.css</div>
-      <div id="js" class="cursor-pointer text-yellow-600 hover:underline">script.js</div>
-    </div>
-
-    <div class="flex flex-col justify-center items-center gap-4">
-      <button id="fetch-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-600">example.com</button>
-      <button id="reset-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-600">reset</button>
-    </div>
-
-    <div class="bg-gradient-to-br from-blue-50 to-gray-100 text-center shadow-2xl rounded-xl p-6">
-      <h3 class="font-bold text-2xl mb-4 text-gray-700">Browser</h3>
-      <div id="browser-content" class="border-2 border-gray-200 rounded-xl shadow-inner p-4 text-gray-500 min-h-[100px]">
-        Content loads here after fetching.
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="eyebrow">WebLab</div>
+        <h1>Jak przeglądarka pobiera i renderuje stronę</h1>
+        <p class="subtitle">Interaktywny symulator pokazuje, co dzieje się od wpisania adresu URL do momentu, gdy użytkownik widzi gotowy interfejs. Zmień parametry sieci, włącz cache i obserwuj pipeline renderowania.</p>
       </div>
-    </div>
+      <div class="scoreboard" aria-label="Metryki symulacji">
+        <div class="metric">
+          <span>Czas całkowity</span>
+          <strong id="totalTime">0 ms</strong>
+        </div>
+        <div class="metric">
+          <span>Zasoby</span>
+          <strong id="resourceCount">0/4</strong>
+        </div>
+        <div class="metric">
+          <span>Status</span>
+          <strong id="statusText">Gotowe</strong>
+        </div>
+      </div>
+    </header>
 
-  </div>
+    <section class="workbench">
+      <aside class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Sterowanie</h2>
+            <p class="panel-subtitle">Ustaw warunki pobierania strony.</p>
+          </div>
+        </div>
+        <div class="panel-body controls">
+          <div class="field">
+            <label for="urlInput">Adres URL</label>
+            <input id="urlInput" type="text" value="https://example.edu/kurs/web" autocomplete="off">
+          </div>
 
-  <div class="w-full max-w-5xl shadow-2xl bg-white rounded-xl">
-    <h3 class="font-bold text-xl p-4 border-b border-gray-200">Console Log</h3>
-    <div id="console-log" class="bg-black text-green-400 font-mono text-xs p-4 rounded-b-xl h-64 overflow-auto whitespace-pre-wrap"></div>
-  </div>
+          <div class="field">
+            <label for="networkSelect">Profil sieci</label>
+            <select id="networkSelect">
+              <option value="fast">Szybkie łącze biurowe</option>
+              <option value="mobile">Sieć mobilna</option>
+              <option value="slow">Słabe Wi-Fi</option>
+            </select>
+          </div>
 
-  <div id="popup" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 hidden">
-    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-3xl overflow-auto max-h-[80vh] relative">
-      <pre id="popup-content" class="text-sm text-gray-800"></pre>
-      <button id="close-popup" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full shadow-lg hover:bg-red-600">Close</button>
-    </div>
-  </div>
+          <div class="field">
+            <label for="latencyRange">Opóźnienie DNS i serwera</label>
+            <input id="latencyRange" type="range" min="40" max="520" value="120" step="20">
+            <div class="range-meta">
+            <span>40 ms</span>
+              <strong id="latencyValue">120 ms</strong>
+              <span>520 ms</span>
+            </div>
+          </div>
 
-<script>
-let injectedScript = null;
+          <label class="toggle-row" for="cacheToggle">
+            <input id="cacheToggle" type="checkbox">
+            Użyj cache przeglądarki
+          </label>
 
-const serverContent = {
-  html: `
-<nav id="menu">
-  <ul>
-    <li>Home</li>
-    <li>About</li>
-    <li>Contact</li>
-  </ul>
-</nav>
-<main>
-  <h1>Welcome!</h1>
-  <p>This is a simple example of how websites are served.</p>
-  <button id="toggleColor">Toggle Menu Color</button>
-</main>`,
+          <label class="toggle-row" for="compressionToggle">
+            <input id="compressionToggle" type="checkbox" checked>
+            Kompresja odpowiedzi gzip/brotli
+          </label>
 
-  css: document.querySelector('style').innerText,
+          <label class="toggle-row" for="blockingToggle">
+            <input id="blockingToggle" type="checkbox" checked>
+            CSS blokuje pierwsze renderowanie
+          </label>
 
-  js: `
-document.querySelector("#toggleColor").onclick = function() {
-  const menu = document.querySelector("#menu");
-  menu.style.backgroundColor = menu.style.backgroundColor === "green" ? "#007acc" : "green";
-};
-console.log("Interactive JS loaded!");`
-};
+          <div class="action-row">
+            <button class="primary" id="runButton" type="button">Uruchom</button>
+            <button class="secondary" id="resetButton" type="button">Reset</button>
+          </div>
 
-const logs = [];
-const fetchBtn = document.querySelector('#fetch-btn');
-const resetBtn = document.querySelector('#reset-btn');
-const consoleLog = document.querySelector('#console-log');
-const browserContent = document.querySelector('#browser-content');
+          <div>
+            <label>Scenariusze</label>
+            <div class="scenario-list">
+              <button class="scenario active" data-scenario="first" type="button">Pierwsza wizyta</button>
+            <button class="scenario" data-scenario="cached" type="button">Powrót z cache</button>
+              <button class="scenario" data-scenario="slowcss" type="button">Wolny plik CSS</button>
+            </div>
+          </div>
+        </div>
+      </aside>
 
-fetchBtn.onclick = () => {
-  logs.push(
-    "GET / HTTP/1.1",
-    "Host: example.com",
-    "User-Agent: BrowserSimulator/1.0",
-    "Accept: text/html,application/xhtml+xml",
-    "",
-    "HTTP/1.1 200 OK",
-    "Content-Type: text/html; charset=UTF-8",
-    "Server: MockServer/1.0",
-    "",
-    serverContent.html,
-    serverContent.css,
-    serverContent.js,
-    "Components received and rendered in browser"
-  );
+      <section class="panel stage">
+        <div class="diagram">
+          <div class="node">
+            <div class="node-title">Klient <span id="clientState">idle</span></div>
+            <div class="node-screen">
+              <div class="mini-window">
+                <div class="mini-bar"><span class="mini-dot"></span><span class="mini-dot"></span><span class="mini-dot"></span></div>
+                <div class="mini-content">
+                  <div class="mini-line accent"></div>
+                  <div class="mini-line"></div>
+                  <div class="mini-line short"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="arrow">
+            <div class="arrow-line"></div>
+            <span>request</span>
+          </div>
+          <div class="node">
+            <div class="node-title">Siec <span id="networkState">czeka</span></div>
+            <div class="node-screen">
+              <div class="packet" id="packetLabel">brak pakietu</div>
+            </div>
+          </div>
+          <div class="arrow">
+            <div class="arrow-line"></div>
+            <span>response</span>
+          </div>
+          <div class="node">
+            <div class="node-title">Serwer <span id="serverState">200</span></div>
+            <div class="node-screen" id="serverScreen">HTML, CSS, JS i obrazy są gotowe do wysłania.</div>
+          </div>
+        </div>
 
-  consoleLog.textContent = logs.join('\n\n');
-  browserContent.innerHTML = `<style>${serverContent.css}</style>` + serverContent.html;
+        <div class="pipeline" id="pipeline" aria-label="Etapy procesu pobierania i renderowania"></div>
+      </section>
 
-  if (injectedScript) injectedScript.remove();
-  injectedScript = document.createElement('script');
-  injectedScript.innerHTML = serverContent.js;
-  document.body.appendChild(injectedScript);
-};
+      <aside class="details">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Podglad techniczny</h2>
+            <p class="panel-subtitle">Zobacz, który element procesu jest aktywny.</p>
+            </div>
+          </div>
+          <div class="panel-body details">
+            <div class="tabs">
+              <button class="tab active" data-tab="request" type="button">HTTP</button>
+              <button class="tab" data-tab="dom" type="button">DOM</button>
+              <button class="tab" data-tab="render" type="button">Render</button>
+            </div>
+            <pre class="codebox" id="codeBox"></pre>
+            <div class="explain" id="explainBox"></div>
+          </div>
+        </section>
 
-resetBtn.onclick = () => location.reload();
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Waterfall</h2>
+            <p class="panel-subtitle">Czas pobierania zasobów.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="waterfall" id="waterfall"></div>
+          </div>
+        </section>
+      </aside>
+    </section>
 
-document.querySelectorAll('#html, #css, #js').forEach(elem => {
-  elem.onclick = () => {
-    document.querySelector('#popup-content').textContent = serverContent[elem.id];
-    document.querySelector('#popup').classList.remove('hidden');
-  };
-});
+    <section class="workbench" style="grid-template-columns: minmax(0, 1fr) 420px;">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Widok przeglądarki</h2>
+            <p class="panel-subtitle">Efekt końcowy po zbudowaniu drzewa renderowania.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="browser-preview">
+            <div class="browser-top">
+              <span class="mini-dot"></span>
+              <span class="mini-dot"></span>
+              <span class="mini-dot"></span>
+              <div class="browser-address" id="addressBar">https://example.edu/kurs/web</div>
+            </div>
+            <div class="rendered-page" id="renderedPage">
+              <div class="skeleton" style="width: 52%;"></div>
+              <div class="skeleton" style="width: 88%;"></div>
+              <div class="skeleton" style="width: 72%;"></div>
+              <div class="skeleton" style="width: 46%;"></div>
+            </div>
+          </div>
+          <div class="resource-list" id="resourceList"></div>
+        </div>
+      </section>
 
-document.querySelector('#close-popup').onclick = () => {
-  document.querySelector('#popup').classList.add('hidden');
-};
-</script>
+      <aside class="details">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Dziennik</h2>
+              <p class="panel-subtitle">Kolejnosc zdarzen podczas symulacji.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="log" id="log"></div>
+          </div>
+        </section>
 
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Szybki test</h2>
+              <p class="panel-subtitle">Sprawdz, czy pipeline jest jasny.</p>
+            </div>
+          </div>
+          <div class="panel-body quiz">
+              <p class="subtitle" style="font-size: 13px;">Co przeglądarka zwykle musi zbudować przed malowaniem strony?</p>
+            <button data-answer="wrong" type="button">Tylko adres URL</button>
+            <button data-answer="correct" type="button">DOM, CSSOM i drzewo renderowania</button>
+            <button data-answer="wrong" type="button">Wyłącznie obrazki i fonty</button>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const steps = [
+      {
+        id: 'url',
+        title: 'Wpisanie adresu',
+        description: 'Przeglądarka normalizuje URL, sprawdza schemat HTTPS i przygotowuje żądanie sieciowe.',
+        base: 18
+      },
+      {
+        id: 'dns',
+        title: 'DNS',
+        description: 'Nazwa domeny jest tłumaczona na adres IP serwera. Cache DNS może ten etap skrócić.',
+        base: 80
+      },
+      {
+        id: 'connect',
+        title: 'TCP i TLS',
+        description: 'Klient otwiera połączenie, negocjuje szyfrowanie i sprawdza certyfikat.',
+        base: 120
+      },
+      {
+        id: 'request',
+        title: 'Żądanie HTTP',
+        description: 'Przeglądarka wysyła nagłówki, informacje o cache, akceptowane typy i ciasteczka.',
+        base: 32
+      },
+      {
+        id: 'response',
+        title: 'Odpowiedź serwera',
+        description: 'Serwer zwraca status, nagłówki i strumień HTML. Potem dochodzą CSS, JS, fonty i obrazy.',
+        base: 150
+      },
+      {
+        id: 'parse',
+        title: 'Parsowanie HTML i CSS',
+        description: 'HTML tworzy DOM, CSS tworzy CSSOM. Skrypty mogą zatrzymać parser, jeżeli blokują wykonanie.',
+        base: 90
+      },
+      {
+        id: 'layout',
+        title: 'Layout',
+        description: 'Silnik oblicza rozmiary i pozycje elementów dla aktualnego widoku.',
+        base: 64
+      },
+      {
+        id: 'paint',
+        title: 'Paint i composite',
+        description: 'Warstwy są malowane, łączone i wysyłane do ekranu. Użytkownik widzi gotową stronę.',
+        base: 76
+      }
+    ];
+
+    const resources = [
+      { name: 'index.html', type: 'document', weight: 1 },
+      { name: 'styles.css', type: 'stylesheet', weight: 0.8 },
+      { name: 'app.js', type: 'script', weight: 0.65 },
+      { name: 'hero.webp', type: 'image', weight: 1.15 }
+    ];
+
+    const state = {
+      activeStep: -1,
+      completed: new Set(),
+      totalTime: 0,
+      resourceDone: 0,
+      currentTab: 'request',
+      running: false,
+      scenario: 'first'
+    };
+
+    const refs = {
+      pipeline: document.getElementById('pipeline'),
+      totalTime: document.getElementById('totalTime'),
+      resourceCount: document.getElementById('resourceCount'),
+      statusText: document.getElementById('statusText'),
+      codeBox: document.getElementById('codeBox'),
+      explainBox: document.getElementById('explainBox'),
+      waterfall: document.getElementById('waterfall'),
+      log: document.getElementById('log'),
+      renderedPage: document.getElementById('renderedPage'),
+      resourceList: document.getElementById('resourceList'),
+      addressBar: document.getElementById('addressBar'),
+      urlInput: document.getElementById('urlInput'),
+      latencyRange: document.getElementById('latencyRange'),
+      latencyValue: document.getElementById('latencyValue'),
+      networkSelect: document.getElementById('networkSelect'),
+      cacheToggle: document.getElementById('cacheToggle'),
+      compressionToggle: document.getElementById('compressionToggle'),
+      blockingToggle: document.getElementById('blockingToggle'),
+      clientState: document.getElementById('clientState'),
+      networkState: document.getElementById('networkState'),
+      serverState: document.getElementById('serverState'),
+      serverScreen: document.getElementById('serverScreen'),
+      packetLabel: document.getElementById('packetLabel')
+    };
+
+    const networkProfiles = {
+      fast: { label: 'szybkie łącze', multiplier: 0.78 },
+      mobile: { label: 'sieć mobilna', multiplier: 1.18 },
+      slow: { label: 'słabe Wi-Fi', multiplier: 1.75 }
+    };
+
+    function formatMs(value) {
+      return `${Math.round(value)} ms`;
+    }
+
+    function getStepTime(step) {
+      const latency = Number(refs.latencyRange.value);
+      const network = networkProfiles[refs.networkSelect.value].multiplier;
+      let time = step.base * network + latency * 0.28;
+      if (refs.cacheToggle.checked && ['dns', 'connect', 'response'].includes(step.id)) time *= 0.34;
+      if (refs.compressionToggle.checked && step.id === 'response') time *= 0.72;
+      if (!refs.blockingToggle.checked && step.id === 'parse') time *= 0.72;
+      if (state.scenario === 'slowcss' && ['response', 'parse'].includes(step.id)) time *= 1.35;
+      return Math.max(12, time);
+    }
+
+    function renderPipeline() {
+      refs.pipeline.innerHTML = steps.map((step, index) => {
+        const status = state.completed.has(index) ? 'done' : index === state.activeStep ? 'active' : '';
+        const time = state.completed.has(index) || index === state.activeStep ? formatMs(getStepTime(step)) : 'czeka';
+        return `
+          <article class="step ${status}">
+            <div class="step-index">${index + 1}</div>
+            <div>
+              <h3>${step.title}</h3>
+              <p>${step.description}</p>
+            </div>
+            <div class="step-time">${time}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderWaterfall() {
+      refs.waterfall.innerHTML = resources.map((item, index) => {
+        const width = state.resourceDone > index ? 100 : state.activeStep >= 4 ? Math.max(18, Math.min(92, (state.activeStep - 3) * 24 * item.weight)) : 0;
+        const time = width ? formatMs(60 * item.weight * networkProfiles[refs.networkSelect.value].multiplier) : '0 ms';
+        return `
+          <div class="water-row">
+            <span>${item.name}</span>
+            <div class="bar"><span style="width:${width}%"></span></div>
+            <span>${time}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderResources() {
+      refs.resourceList.innerHTML = resources.map((item, index) => {
+        const done = state.resourceDone > index;
+        return `<div class="resource ${done ? 'done' : ''}"><span>${item.name}</span><span>${done ? 'pobrano' : item.type}</span></div>`;
+      }).join('');
+    }
+
+    function codeForCurrentTab() {
+      const url = refs.urlInput.value.trim() || 'https://example.edu/kurs/web';
+      const host = url.replace(/^https?:\/\//, '').split('/')[0] || 'example.edu';
+      if (state.currentTab === 'request') {
+        return `GET /kurs/web HTTP/2
+Host: ${host}
+Accept: text/html,application/xhtml+xml
+Accept-Encoding: br, gzip
+Cache-Control: ${refs.cacheToggle.checked ? 'max-age=3600' : 'no-cache'}
+
+HTTP/2 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Encoding: ${refs.compressionToggle.checked ? 'br' : 'identity'}
+Server-Timing: dns;dur=${Math.round(getStepTime(steps[1]))}, app;dur=${Math.round(getStepTime(steps[4]))}`;
+      }
+      if (state.currentTab === 'dom') {
+        return `<html>
+  <head>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="lesson">
+      <h1>Jak dziala WWW</h1>
+      <p>HTML staje sie drzewem DOM.</p>
+    </main>
+  </body>
+</html>`;
+      }
+      return `DOM + CSSOM
+  -> drzewo renderowania
+  -> layout: pozycje i rozmiary
+  -> paint: tekst, tlo, obramowania
+  -> composite: warstwy na ekranie`;
+    }
+
+    function explanationForCurrentStep() {
+      const step = steps[Math.max(0, state.activeStep)];
+      if (!step) return 'Uruchom symulację, aby zobaczyć opis aktywnego etapu.';
+      const cacheNote = refs.cacheToggle.checked ? ' Cache skraca część etapów, ale przeglądarka nadal musi upewnić się, że może użyć lokalnych danych.' : '';
+      return `${step.title}: ${step.description}${cacheNote}`;
+    }
+
+    function renderDetails() {
+      refs.codeBox.textContent = codeForCurrentTab();
+      refs.explainBox.textContent = explanationForCurrentStep();
+    }
+
+    function renderBrowserPreview(final = false) {
+      refs.addressBar.textContent = refs.urlInput.value.trim() || 'https://example.edu/kurs/web';
+      if (!final) {
+        refs.renderedPage.innerHTML = `
+          <div class="skeleton" style="width: 52%;"></div>
+          <div class="skeleton" style="width: 88%;"></div>
+          <div class="skeleton" style="width: 72%;"></div>
+          <div class="skeleton" style="width: 46%;"></div>
+        `;
+        return;
+      }
+      refs.renderedPage.innerHTML = `
+        <div class="render-card">
+          <h2>Strona wyrenderowana</h2>
+          <p>Przeglądarka pobrała dokument, zbudowała DOM i CSSOM, policzyła layout oraz namalowała piksele. Interfejs jest gotowy do interakcji.</p>
+        </div>
+        <div class="mini-line accent"></div>
+        <div class="mini-line"></div>
+        <div class="mini-line short"></div>
+      `;
+    }
+
+    function addLog(message) {
+      const item = document.createElement('p');
+      const elapsed = String(Math.round(state.totalTime)).padStart(4, ' ');
+      item.textContent = `[${elapsed} ms] ${message}`;
+      refs.log.prepend(item);
+    }
+
+    function updateNodeState() {
+      const active = steps[state.activeStep]?.id || 'idle';
+      refs.clientState.textContent = state.running ? 'pracuje' : 'idle';
+      refs.networkState.textContent = state.running ? networkProfiles[refs.networkSelect.value].label : 'czeka';
+      refs.serverState.textContent = state.activeStep >= 4 ? '200' : 'gotowy';
+      refs.packetLabel.textContent = state.running ? active.toUpperCase() : 'brak pakietu';
+      refs.serverScreen.textContent = refs.cacheToggle.checked && state.activeStep >= 4
+        ? 'Część zasobów wraca z cache, serwer obsługuje tylko potrzebne odświeżenia.'
+        : 'HTML, CSS, JS i obrazy są gotowe do wysłania.';
+    }
+
+    function updateMetrics() {
+      refs.totalTime.textContent = formatMs(state.totalTime);
+      refs.resourceCount.textContent = `${state.resourceDone}/4`;
+      refs.statusText.textContent = state.running ? 'Trwa' : state.completed.size === steps.length ? 'Gotowe' : 'Gotowe';
+      refs.latencyValue.textContent = `${refs.latencyRange.value} ms`;
+    }
+
+    function renderAll() {
+      renderPipeline();
+      renderWaterfall();
+      renderResources();
+      renderDetails();
+      updateNodeState();
+      updateMetrics();
+    }
+
+    function resetSimulation() {
+      state.activeStep = -1;
+      state.completed = new Set();
+      state.totalTime = 0;
+      state.resourceDone = 0;
+      state.running = false;
+      refs.log.innerHTML = '';
+      renderBrowserPreview(false);
+      renderAll();
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, Math.min(ms, 650)));
+    }
+
+    async function runSimulation() {
+      if (state.running) return;
+      resetSimulation();
+      state.running = true;
+      addLog('Start nawigacji do adresu URL.');
+      renderAll();
+      for (let index = 0; index < steps.length; index += 1) {
+        state.activeStep = index;
+        const step = steps[index];
+        const stepTime = getStepTime(step);
+        addLog(`${step.title}: start.`);
+        if (step.id === 'response') state.resourceDone = refs.cacheToggle.checked ? 3 : 1;
+        if (step.id === 'parse') state.resourceDone = refs.cacheToggle.checked ? 4 : 3;
+        if (step.id === 'paint') state.resourceDone = 4;
+        renderAll();
+        await wait(stepTime);
+        state.totalTime += stepTime;
+        state.completed.add(index);
+        addLog(`${step.title}: zakończono po ${formatMs(stepTime)}.`);
+        renderAll();
+      }
+      state.activeStep = steps.length - 1;
+      state.running = false;
+      renderBrowserPreview(true);
+      addLog('Pierwszy render zakończony. Strona jest widoczna.');
+      renderAll();
+    }
+
+    document.getElementById('runButton').addEventListener('click', runSimulation);
+    document.getElementById('resetButton').addEventListener('click', resetSimulation);
+
+    [refs.urlInput, refs.latencyRange, refs.networkSelect, refs.cacheToggle, refs.compressionToggle, refs.blockingToggle].forEach((control) => {
+      control.addEventListener('input', () => {
+        refs.addressBar.textContent = refs.urlInput.value.trim() || 'https://example.edu/kurs/web';
+        renderAll();
+      });
+      control.addEventListener('change', renderAll);
+    });
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((item) => item.classList.remove('active'));
+        tab.classList.add('active');
+        state.currentTab = tab.dataset.tab;
+        renderDetails();
+      });
+    });
+
+    document.querySelectorAll('.scenario').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.scenario').forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        state.scenario = button.dataset.scenario;
+        if (state.scenario === 'cached') {
+          refs.cacheToggle.checked = true;
+          refs.networkSelect.value = 'fast';
+          refs.latencyRange.value = 80;
+        } else if (state.scenario === 'slowcss') {
+          refs.cacheToggle.checked = false;
+          refs.networkSelect.value = 'slow';
+          refs.latencyRange.value = 320;
+          refs.blockingToggle.checked = true;
+        } else {
+          refs.cacheToggle.checked = false;
+          refs.networkSelect.value = 'fast';
+          refs.latencyRange.value = 120;
+          refs.blockingToggle.checked = true;
+        }
+        resetSimulation();
+      });
+    });
+
+    document.querySelectorAll('.quiz button').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.quiz button').forEach((item) => item.classList.remove('correct', 'incorrect'));
+        button.classList.add(button.dataset.answer === 'correct' ? 'correct' : 'incorrect');
+      });
+    });
+
+    resetSimulation();
+  </script>
 </body>
 </html>
