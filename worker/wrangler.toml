@@ -1,0 +1,7 @@
+name = "anatomia-proxy"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# After `npx wrangler deploy` this Worker is reachable at:
+#   https://anatomia-proxy.<your-subdomain>.workers.dev
+# Paste that URL into index.html (PROXY_WORKER_URL) — see README.md.

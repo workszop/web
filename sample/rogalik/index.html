@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rogalik — kawiarnia i piekarnia</title>
+
+  <!-- HTML łączy się z plikiem CSS, który odpowiada za wygląd: -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <!-- HTML to szkielet i treść strony. Same znaczniki, bez wyglądu i bez akcji. -->
+  <header class="top">
+    <!-- Logo z darmowych ikon Lucide (licencja ISC): filiżanka + rogalik -->
+    <p class="logos">
+      <img class="logo" alt=""
+           src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f6e8d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M10 2v2'/><path d='M14 2v2'/><path d='M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1'/><path d='M6 2v2'/></svg>">
+      <img class="logo" alt="Logo: kawiarnia i piekarnia Rogalik"
+           src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f6e8d2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M10.2 18H4.774a1.5 1.5 0 0 1-1.352-.97 11 11 0 0 1 .132-6.487'/><path d='M18 10.2V4.774a1.5 1.5 0 0 0-.97-1.352 11 11 0 0 0-6.486.132'/><path d='M18 5a4 3 0 0 1 4 3 2 2 0 0 1-2 2 10 10 0 0 0-5.139 1.42'/><path d='M5 18a3 4 0 0 0 3 4 2 2 0 0 0 2-2 10 10 0 0 1 1.42-5.14'/><path d='M8.709 2.554a10 10 0 0 0-6.155 6.155 1.5 1.5 0 0 0 .676 1.626l9.807 5.42a2 2 0 0 0 2.718-2.718l-5.42-9.807a1.5 1.5 0 0 0-1.626-.676'/></svg>">
+    </p>
+    <h1>Rogalik</h1>
+    <p class="slogan">kawiarnia i piekarnia</p>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Świeże wypieki każdego ranka</h2>
+      <p>Pieczemy chleb na zakwasie, maślane rogaliki i drożdżówki — codziennie od świtu.
+         Wpadnij na kawę i coś ciepłego prosto z pieca.</p>
+      <button id="orderBtn" class="cta">Zamawiam rogalika 🥐</button>
+      <p id="orderCount" class="count"></p>
+    </section>
+
+    <section class="menu">
+      <h2>Z naszej piekarni</h2>
+      <ul>
+        <li><span class="name">Rogalik maślany</span> <span class="price">4 zł</span></li>
+        <li><span class="name">Chleb na zakwasie</span> <span class="price">9 zł</span></li>
+        <li><span class="name">Drożdżówka z budyniem</span> <span class="price">6 zł</span></li>
+        <li><span class="name">Kawa z mlekiem</span> <span class="price">12 zł</span></li>
+      </ul>
+    </section>
+
+    <section class="hours">
+      <h2>Godziny otwarcia</h2>
+      <p>Poniedziałek–Piątek: 6:00–19:00<br>
+         Sobota: 7:00–15:00<br>
+         Niedziela: nieczynne</p>
+      <p id="openNow" class="status"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>ul. Piekarska 3, Kraków · tel. 12 000 00 00</p>
+  </footer>
+
+  <!-- HTML uruchamia plik JavaScript, który dodaje interaktywność: -->
+  <script src="script.js"></script>
+</body>
+</html>
