@@ -1,8 +1,7 @@
 # WebLab
 
-Polska edukacyjna aplikacja typu single-page pokazująca, jak przeglądarka pobiera i renderuje stronę internetową.
-
-Aplikacja omawia obsługę URL, DNS, TCP/TLS, żądania i odpowiedzi HTTP, pobieranie zasobów, parsowanie DOM/CSSOM, layout, paint oraz compositing. Całość działa jako statyczny HTML/CSS/JavaScript w pliku `index.html`.
+Edukacyjna aplikacja pokazująca jak przeglądarka pobiera i renderuje stronę internetową.
+Całość działa jako statyczny HTML/CSS/JavaScript w pliku `index.html`.
 
 ## Struktura repozytorium
 
@@ -11,13 +10,13 @@ Aplikacja omawia obsługę URL, DNS, TCP/TLS, żądania i odpowiedzi HTTP, pobie
 | `index.html` | Główna aplikacja — cały interfejs i logika w jednym pliku statycznym. |
 | `worker/` | Cloudflare Worker pełniący rolę serwerowego proxy dla panelu „Wygląd strony". |
 | `sample/` | Przykładowe strony WWW używane do demonstracji renderowania. |
-| `anatomy-of-a-webpage-spec.md` | Specyfikacja projektu (zakres, panele, zachowanie). |
 
 ## Worker (`worker/`)
 
-Niewielki Cloudflare Worker, który pobiera dowolną publiczną stronę **po stronie serwera** i zwraca jej HTML z nagłówkami CORS. Dzięki temu **Panel B (Wygląd strony)** potrafi wyrenderować dowolny serwis — także takie, na których darmowe publiczne proxy zawodzą (Wikipedia, domeny z przekierowaniami itp.).
+Niewielki Cloudflare Worker, który pobiera dowolną publiczną stronę **po stronie serwera** i zwraca jej HTML z nagłówkami CORS. Dzięki temu **Panel Wygląd strony** potrafi wyrenderować dowolny serwis — także takie, na których darmowe publiczne proxy zawodzą (Wikipedia, domeny z przekierowaniami itp.).
+Działa w darmowym planie Cloudflare (100 tys. żądań/dobę).
 
-Działa w darmowym planie Cloudflare (100 tys. żądań/dobę) i dotyczy wyłącznie Panelu B. Panel A (Waga) korzysta niezależnie z PageSpeed Insights API.
+Panel Waga strony korzysta niezależnie z PageSpeed Insights API.
 
 **Wdrożenie (Wrangler CLI):**
 
@@ -47,7 +46,7 @@ Gotowe strony WWW do prezentowania kolejnych etapów renderowania w aplikacji:
 To statyczna aplikacja — wystarczy otworzyć `index.html` w przeglądarce lub podać ją dowolnym serwerem plików statycznych, np.:
 
 ```bash
-python3 -m http.server 8753
+python3 -m http.server 5000
 ```
 
-a następnie otworzyć <http://localhost:8753>.
+a następnie otworzyć <http://localhost:5000>.
