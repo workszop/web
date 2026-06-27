@@ -1,0 +1,59 @@
+/* ===========================================================
+   styles.css — WYGLĄD strony „Rogalik"
+   CSS nie zmienia treści. Dodaje kolory, czcionki, układ i odstępy.
+   Wyłącz ten plik, a zostanie ta sama treść — tylko „goła".
+   =========================================================== */
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #3a2c1a;
+  background: #fdf6ec;            /* ciepły, kremowy tła */
+  line-height: 1.6;
+}
+
+/* Nagłówek strony — niski brązowy pasek na górze */
+.top {
+  background: #c4762e;
+  color: #fff;
+  text-align: center;
+  padding: 14px 20px;
+}
+.logos { margin: 0; display: flex; justify-content: center; gap: 10px; }
+.logo { width: 34px; height: 34px; }
+.top h1 { margin: 4px 0 0; font-size: 28px; letter-spacing: 1px; }
+.slogan { margin: 2px 0 0; font-style: italic; opacity: .9; }
+
+/* Główna treść — wyśrodkowana kolumna */
+main { max-width: 620px; margin: 0 auto; padding: 28px 20px; }
+section { margin-bottom: 36px; }
+h2 {
+  color: #a85a1c;
+  border-bottom: 2px solid #ead6bd;
+  padding-bottom: 6px;
+}
+
+/* Przycisk wezwania do działania */
+.cta {
+  background: #c4762e; color: #fff; border: none;
+  padding: 12px 22px; border-radius: 24px;
+  font-size: 16px; cursor: pointer;
+}
+.cta:hover { background: #a85a1c; }
+.count { color: #a85a1c; font-weight: bold; min-height: 22px; }
+
+/* Lista oferty — nazwa po lewej, cena po prawej */
+.menu ul { list-style: none; padding: 0; margin: 0; }
+.menu li {
+  display: flex; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px dashed #ead6bd;
+}
+.price { color: #c4762e; font-weight: bold; }
+
+.status { font-weight: bold; }
+
+/* Stopka */
+footer {
+  background: #3a2c1a; color: #f0e0cc;
+  text-align: center; padding: 18px; font-size: 14px;
+}
