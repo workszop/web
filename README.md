@@ -38,7 +38,6 @@ Pełna instrukcja (wdrożenie przez panel Cloudflare, zabezpieczenie origin, tes
 
 Gotowe strony WWW do prezentowania kolejnych etapów renderowania w aplikacji:
 
-- `sample/index.html` — „Kawiarnia & Czytelnia «Pod Lipą»": pełna strona z zewnętrznym web-fontem i osadzonym CSS; pozwala pokazać, jak wyłączanie warstw (czcionki, CSS) wpływa na wygląd.
 - `sample/rogalik/` — „Rogalik": strona rozbita na osobne pliki `index.html`, `styles.css` i `script.js`, ilustrująca rozdział treści (HTML), wyglądu (CSS) i zachowania (JS).
 
 ## Uruchomienie lokalnie
