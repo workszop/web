@@ -336,11 +336,10 @@
     background: var(--teal-soft); border-radius: var(--r-lg);
     padding: 18px 22px; color: var(--teal-ink); margin-bottom: var(--sp-5);
   }
-  /* explanation above the preview: flow bullets horizontally to save vertical space */
-  .lesson-explain ul { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style-position: inside; }
   .lesson-explain h3 { font-family: var(--font-display); font-size: var(--h4); margin: 0 0 var(--sp-2); color: var(--teal-ink); }
   .lesson-explain p { margin: 0 0 var(--sp-3); font-size: var(--body-sm); line-height: 1.55; color: var(--teal-ink); }
-  .lesson-explain ul { margin: 0; padding-left: 18px; font-size: var(--body-sm); line-height: 1.6; color: var(--teal-ink); }
+  /* explanation above the preview: flow bullets horizontally to save vertical space */
+  .lesson-explain ul { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style-position: inside; margin: 0; padding-left: 18px; font-size: var(--body-sm); line-height: 1.6; color: var(--teal-ink); }
   .lesson-explain li { margin-bottom: 4px; }
 
   /* File viewer */
@@ -367,11 +366,8 @@
 
   /* Responsive */
   @media (max-width: 860px) {
-    .panels { grid-template-columns: 1fr; }
     .shell { padding: 0 var(--sp-5); }
-    .stats { grid-template-columns: 1fr 1fr; }
     .bar-row { grid-template-columns: 96px 1fr auto; }
-    .lesson-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 520px) {
     .toggles { grid-template-columns: 1fr; }
@@ -493,6 +489,9 @@
   /* ============================================================
      PL — single Polish string dictionary (no hard-coded UI English)
      ============================================================ */
+  // Shorthand for the dozens of element lookups below.
+  const $ = (id) => document.getElementById(id);
+
   const PL = {
     appName:        "Anatomia strony WWW",
     tagline:        "Zobacz, z czego naprawdę zbudowana jest strona internetowa.",
@@ -503,7 +502,6 @@
     modeExample:    "Przykład „Rogalik”",
     loading:        "Google ładuje i mierzy stronę… to potrwa kilka sekund.",
     emptyWeight:    "Wpisz adres strony i kliknij „Analizuj”, albo kliknij „Pokaż przykład”.",
-    emptyAppear:    "Tu pojawi się podgląd strony z wybranymi warstwami.",
 
     // Panel A — waga
     weightTitle:    "Waga strony",
@@ -605,44 +603,44 @@
   /* ---- Static label wiring ---- */
   function applyStaticStrings() {
     document.title = PL.appName;
-    document.getElementById("appName").textContent = PL.appName;
-    document.getElementById("tagline").textContent = PL.tagline;
-    document.getElementById("url").placeholder = PL.urlPlaceholder;
-    document.getElementById("analyzeBtn").textContent = PL.analyze;
-    document.getElementById("sampleBtn").textContent = PL.showExample;
-    document.getElementById("modeRealBtn").textContent = PL.modeReal;
-    document.getElementById("modeExampleBtn").textContent = PL.modeExample;
-    document.getElementById("noteDecoupled").textContent = PL.noteDecoupled;
-    document.getElementById("panelATitle").textContent = PL.weightTitle;
-    document.getElementById("panelASub").textContent = PL.weightSub;
-    document.getElementById("noteWeight").textContent = PL.noteWeight;
-    document.getElementById("panelBTitle").textContent = PL.appearTitle;
-    document.getElementById("layersHint").textContent = PL.layersHint;
-    document.getElementById("lblCss").textContent = PL.layerCss;
-    document.getElementById("lblJs").textContent = PL.layerJs;
-    document.getElementById("lblImg").textContent = PL.layerImg;
-    document.getElementById("lblFonts").textContent = PL.layerFonts;
-    document.getElementById("noteRender").textContent = PL.noteRender;
-    document.getElementById("apiKeyHint").textContent = PL.apiKeyHint;
-    document.getElementById("apiKey").placeholder = PL.apiKeyPlaceholder;
-    document.getElementById("apiKeySaveBtn").textContent = PL.apiKeySave;
-    document.getElementById("apiKeyClearBtn").textContent = PL.apiKeyClear;
-    document.getElementById("weightBody").innerHTML =
+    $("appName").textContent = PL.appName;
+    $("tagline").textContent = PL.tagline;
+    $("url").placeholder = PL.urlPlaceholder;
+    $("analyzeBtn").textContent = PL.analyze;
+    $("sampleBtn").textContent = PL.showExample;
+    $("modeRealBtn").textContent = PL.modeReal;
+    $("modeExampleBtn").textContent = PL.modeExample;
+    $("noteDecoupled").textContent = PL.noteDecoupled;
+    $("panelATitle").textContent = PL.weightTitle;
+    $("panelASub").textContent = PL.weightSub;
+    $("noteWeight").textContent = PL.noteWeight;
+    $("panelBTitle").textContent = PL.appearTitle;
+    $("layersHint").textContent = PL.layersHint;
+    $("lblCss").textContent = PL.layerCss;
+    $("lblJs").textContent = PL.layerJs;
+    $("lblImg").textContent = PL.layerImg;
+    $("lblFonts").textContent = PL.layerFonts;
+    $("noteRender").textContent = PL.noteRender;
+    $("apiKeyHint").textContent = PL.apiKeyHint;
+    $("apiKey").placeholder = PL.apiKeyPlaceholder;
+    $("apiKeySaveBtn").textContent = PL.apiKeySave;
+    $("apiKeyClearBtn").textContent = PL.apiKeyClear;
+    $("weightBody").innerHTML =
       '<p class="state">' + PL.emptyWeight + '</p>';
   }
 
   function refreshApiKeyTitle() {
-    document.getElementById("apiKeyTitle").textContent =
+    $("apiKeyTitle").textContent =
       getApiKey() ? PL.apiKeyActive : PL.apiKeyTitle;
   }
 
   function initApiKey() {
-    const input = document.getElementById("apiKey");
-    const status = document.getElementById("apiKeyStatus");
+    const input = $("apiKey");
+    const status = $("apiKeyStatus");
     input.value = getApiKey();
     refreshApiKeyTitle();
 
-    document.getElementById("apiKeySaveBtn").addEventListener("click", function () {
+    $("apiKeySaveBtn").addEventListener("click", function () {
       const v = input.value.trim();
       try {
         if (v) localStorage.setItem(PSI_KEY_LS, v); else localStorage.removeItem(PSI_KEY_LS);
@@ -651,7 +649,7 @@
       refreshApiKeyTitle();
     });
 
-    document.getElementById("apiKeyClearBtn").addEventListener("click", function () {
+    $("apiKeyClearBtn").addEventListener("click", function () {
       input.value = "";
       try { localStorage.removeItem(PSI_KEY_LS); } catch (e) {}
       status.textContent = PL.apiKeyCleared;
@@ -720,7 +718,7 @@
         '<td class="num">' + kb(i.size) + '</td></tr>';
     });
 
-    document.getElementById("weightBody").innerHTML =
+    $("weightBody").innerHTML =
       '<div class="stats">' +
         '<div class="stat req"><div class="val">' + intl(data.requests) + '</div><div class="lbl">' + PL.requests + '</div></div>' +
         '<div class="stat size"><div class="val">' + kb(data.bytes) + '</div><div class="lbl">' + PL.transferred + '</div></div>' +
@@ -742,7 +740,7 @@
   }
 
   function showWeightState(html, isError) {
-    document.getElementById("weightBody").innerHTML =
+    $("weightBody").innerHTML =
       '<div class="state' + (isError ? ' err' : '') + '">' + html + '</div>';
   }
 
@@ -820,10 +818,10 @@
 
   function currentLayers() {
     return {
-      css:   document.getElementById("tCss").checked,
-      js:    document.getElementById("tJs").checked,
-      img:   document.getElementById("tImg").checked,
-      fonts: document.getElementById("tFonts").checked,
+      css:   $("tCss").checked,
+      js:    $("tJs").checked,
+      img:   $("tImg").checked,
+      fonts: $("tFonts").checked,
     };
   }
 
@@ -853,7 +851,7 @@
 
     // SPA-without-JS lesson: detect near-empty body text
     const bodyText = (doc.body && doc.body.textContent || "").replace(/\s+/g, " ").trim();
-    const spa = document.getElementById("spaWarning");
+    const spa = $("spaWarning");
     if (!layers.js && bodyText.length < 40) {
       spa.textContent = PL.noteSpaNoJs;
       spa.hidden = false;
@@ -864,21 +862,21 @@
 
   function reRender() {
     if (rawHtmlCache == null) return;
-    renderAppearance(rawHtmlCache, originUrlCache, currentLayers(), document.getElementById("preview"));
+    renderAppearance(rawHtmlCache, originUrlCache, currentLayers(), $("preview"));
   }
 
   function previewMessage(msg) {
-    document.getElementById("preview").srcdoc =
+    $("preview").srcdoc =
       '<!doctype html><meta charset="utf-8"><body style="margin:0;font-family:system-ui,sans-serif;' +
       'color:#5B554D;display:flex;align-items:center;justify-content:center;height:100vh;' +
       'text-align:center;padding:24px;box-sizing:border-box">' + msg + '</body>';
   }
 
   async function loadAppearance(targetUrl, sameOrigin) {
-    const iframe = document.getElementById("preview");
+    const iframe = $("preview");
     iframe.sandbox = "allow-scripts";
     previewMessage(PL.loadingPreview);
-    document.getElementById("spaWarning").hidden = true;
+    $("spaWarning").hidden = true;
     try {
       if (sameOrigin) {
         const res = await fetch(targetUrl);
@@ -907,7 +905,7 @@
   function loadSample() {
     // Same-origin owned sample: hard-coded weight + direct (no-proxy) render
     renderWeight(SAMPLE_WEIGHT);
-    document.getElementById("url").value = "";
+    $("url").value = "";
     loadAppearance("sample/index.html", true);
   }
 
@@ -919,14 +917,14 @@
     return v;
   }
 
-  document.getElementById("form").addEventListener("submit", function (e) {
+  $("form").addEventListener("submit", function (e) {
     e.preventDefault();
-    const v = normalizeUrl(document.getElementById("url").value);
+    const v = normalizeUrl($("url").value);
     if (v) analyze(v);
   });
-  document.getElementById("sampleBtn").addEventListener("click", loadSample);
+  $("sampleBtn").addEventListener("click", loadSample);
   ["tCss", "tJs", "tImg", "tFonts"].forEach(id =>
-    document.getElementById(id).addEventListener("change", reRender)
+    $(id).addEventListener("change", reRender)
   );
 
   /* ============================================================
@@ -961,14 +959,15 @@
 
   function renderStage(stage) {
     if (!rogalikFiles) return;
-    const frame = document.getElementById("lessonFrame");
+    const frame = $("lessonFrame");
     frame.sandbox = (stage === "js") ? "allow-scripts" : "";
     frame.srcdoc = buildStageDoc(stage, rogalikFiles);
     const s = PL.lesson.stages.find(x => x.id === stage);
-    document.getElementById("stageName").textContent = s.name;
-    document.getElementById("stageDesc").textContent = s.desc;
-    document.getElementById("stageAdds").innerHTML = s.adds.map(a => "<li></li>").join("");
-    document.querySelectorAll("#stageAdds li").forEach((li, i) => { li.textContent = s.adds[i]; });
+    $("stageName").textContent = s.name;
+    $("stageDesc").textContent = s.desc;
+    const adds = $("stageAdds");
+    adds.innerHTML = "";
+    s.adds.forEach(a => { const li = document.createElement("li"); li.textContent = a; adds.appendChild(li); });
     document.querySelectorAll("#stages .stage-btn").forEach(b =>
       b.setAttribute("aria-selected", String(b.dataset.stage === stage)));
   }
@@ -977,14 +976,14 @@
     if (!rogalikFiles) return;
     const f = PL.lesson.files.find(x => x.id === fileId);
     const src = fileId === "html" ? rogalikFiles.html : fileId === "css" ? rogalikFiles.css : rogalikFiles.js;
-    document.getElementById("fileRole").textContent = f.role;
-    document.getElementById("fileCode").textContent = src;   // textContent escapes for us
+    $("fileRole").textContent = f.role;
+    $("fileCode").textContent = src;   // textContent escapes for us
     document.querySelectorAll("#fileTabs .file-tab").forEach(b =>
       b.setAttribute("aria-selected", String(b.dataset.file === fileId)));
   }
 
   function buildTabs(containerId, items, labelKey, onClick) {
-    const el = document.getElementById(containerId);
+    const el = $(containerId);
     el.innerHTML = "";
     items.forEach(it => {
       const b = document.createElement("button");
@@ -1006,7 +1005,7 @@
   function showFileSizes(html, css, js) {
     const enc = new TextEncoder();
     const h = enc.encode(html).length, c = enc.encode(css).length, j = enc.encode(js).length;
-    document.getElementById("filesSizes").textContent =
+    $("filesSizes").textContent =
       PL.lesson.sizesIntro +
       " index.html " + fmtFileSize(h) +
       " · styles.css " + fmtFileSize(c) +
@@ -1015,10 +1014,10 @@
   }
 
   async function initLesson() {
-    document.getElementById("lessonTitle").textContent = PL.lesson.title;
-    document.getElementById("lessonSub").textContent = PL.lesson.sub;
-    document.getElementById("filesTitle").textContent = PL.lesson.filesTitle;
-    document.getElementById("filesHint").textContent = PL.lesson.filesHint;
+    $("lessonTitle").textContent = PL.lesson.title;
+    $("lessonSub").textContent = PL.lesson.sub;
+    $("filesTitle").textContent = PL.lesson.filesTitle;
+    $("filesHint").textContent = PL.lesson.filesHint;
     buildTabs("stages", PL.lesson.stages, "tab", renderStage);
     buildTabs("fileTabs", PL.lesson.files, "name", showFile);
 
@@ -1033,7 +1032,7 @@
       renderStage("text");
       showFile("html");
     } catch (e) {
-      document.getElementById("lessonFrame").srcdoc =
+      $("lessonFrame").srcdoc =
         '<!doctype html><meta charset="utf-8"><body style="font-family:sans-serif;color:#5B554D;padding:20px">' +
         PL.lesson.err + '</body>';
     }
@@ -1041,13 +1040,13 @@
 
   // Mode switch — show EITHER the analyzer OR the example, never both.
   function setMode(mode) {
-    document.getElementById("realMode").hidden = (mode !== "real");
-    document.getElementById("exampleMode").hidden = (mode !== "example");
+    $("realMode").hidden = (mode !== "real");
+    $("exampleMode").hidden = (mode !== "example");
     document.querySelectorAll("#modeSwitch .mode-btn").forEach(b =>
       b.setAttribute("aria-selected", String(b.dataset.mode === mode)));
   }
-  document.getElementById("modeRealBtn").addEventListener("click", () => setMode("real"));
-  document.getElementById("modeExampleBtn").addEventListener("click", () => setMode("example"));
+  $("modeRealBtn").addEventListener("click", () => setMode("real"));
+  $("modeExampleBtn").addEventListener("click", () => setMode("example"));
 
   applyStaticStrings();
   initApiKey();
