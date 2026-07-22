@@ -3,1055 +3,1385 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Anatomia strony WWW</title>
-
+  <meta name="description" content="Interaktywne wyjaśnienie, jak pliki wędrują z serwera i stają się stroną w Twojej przeglądarce.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23211E1A'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%23EF5B3F'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%232E78C9'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23E8920C'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%237A5AC2'/%3E%3C/svg%3E">
+  <title>Anatomia strony WWW – jak działa strona internetowa</title>
   <style>
-  /* ============================================================
-     edulab — Colors & Type foundation (verbatim from design tokens)
-     ============================================================ */
-  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-  :root {
-    /* ---- Brand fonts ---- */
-    --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
-    --font-sans:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
-    --font-mono:    'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    /* ─── edulab design tokens (source: edustyl tokens/colors_and_type.css) ─── */
+    :root {
+      --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
+      --font-sans: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+      --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    /* Paper — warm cream backgrounds (the brand never sits on pure white) */
-    --paper:    #FBF7F0;
-    --paper-2:  #F4EDDF;
-    --paper-3:  #ECE1CF;
-    --surface:  #FFFFFF;
+      --paper: #FBF7F0;
+      --paper-2: #F4EDDF;
+      --paper-3: #ECE1CF;
+      --surface: #FFFFFF;
+      --ink: #211E1A;
+      --ink-2: #5B554D;
+      --ink-3: #938A7C;
+      --line: #E7DCCB;
+      --line-2: #D6C8B2;
 
-    /* Ink — warm near-black text & lines */
-    --ink:      #211E1A;
-    --ink-2:    #5B554D;
-    --ink-3:    #938A7C;
-    --line:     #E7DCCB;
-    --line-2:   #D6C8B2;
+      --marigold: #E8920C;
+      --marigold-600: #CE800A;
+      --marigold-soft: #FBE7C2;
+      --marigold-ink: #8A4F00;
+      --on-primary: #FFFFFF;
+      --teal: #0E8C7F;
+      --teal-soft: #D2EBE6;
+      --teal-ink: #0A5A52;
+      --coral: #EF5B3F;
+      --sky: #2E78C9;
+      --play-grape: #7A5AC2;
+      --success: #2F8F5B;
 
-    /* Marigold — primary brand */
-    --marigold:      #E8920C;
-    --marigold-600:  #CE800A;
-    --marigold-soft: #FBE7C2;
-    --marigold-ink:  #8A4F00;
+      --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+      --shadow-sm: 0 1px 2px rgba(33, 30, 26, .06), 0 1px 1px rgba(33, 30, 26, .04);
+      --shadow-md: 0 4px 16px rgba(33, 30, 26, .08), 0 1px 3px rgba(33, 30, 26, .05);
+      --shadow-lg: 0 16px 40px rgba(33, 30, 26, .12), 0 3px 8px rgba(33, 30, 26, .06);
+      --shadow-marigold: 0 8px 22px rgba(232, 146, 12, .28);
+      --focus-ring-color: rgba(232, 146, 12, .45);
 
-    /* Teal — secondary brand */
-    --teal:      #0E8C7F;
-    --teal-600:  #0B7468;
-    --teal-soft: #D2EBE6;
-    --teal-ink:  #0A5A52;
+      /* ─── App mapping: file types on the edulab play palette ─── */
+      --html: var(--coral);
+      --css: var(--sky);
+      --js: var(--marigold);
+      --image: var(--play-grape);
 
-    /* Coral — accent (use sparingly) */
-    --coral:      #EF5B3F;
-    --coral-600:  #D44A30;
-    --coral-soft: #FBDDD4;
-    --coral-ink:  #9A2E1B;
+      /* ─── Dark data panel (server, code window) — edulab ink family ─── */
+      --dark-well: #17140F;
+      --dark-card: #2C2820;
+      --dark-line: rgba(251, 247, 240, .14);
+      --dark-line-strong: rgba(251, 247, 240, .32);
+      --dark-muted: #A79D8C;
+      --dark-control: #5D554A;
+    }
 
-    /* Sky — supportive */
-    --sky:      #2E78C9;
-    --sky-soft: #D9E7F6;
-    --sky-ink:  #1B4E88;
+    * { box-sizing: border-box; }
 
-    /* Play palette */
-    --play-sun:    #F2A516;
-    --play-grass:  #4FA45C;
-    --play-berry:  #C6478B;
-    --play-grape:  #7A5AC2;
-    --play-sky:    #2E78C9;
-    --play-coral:  #EF5B3F;
+    html { scroll-behavior: smooth; }
 
-    /* ---- Semantic ---- */
-    --success: #2F8F5B;  --success-soft: #D7EEDD;  --success-ink: #1C6A3E;
-    --warning: #C9810A;  --warning-soft: #FBEAC6;  --warning-ink: #855207;
-    --danger:  #D8412A;  --danger-soft:  #FAD9D2;  --danger-ink:  #97271A;
-    --info:    #2E78C9;  --info-soft:    #D9E7F6;  --info-ink:    #1B4E88;
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(232, 146, 12, .10), transparent 24rem),
+        radial-gradient(circle at 95% 30%, rgba(14, 140, 127, .08), transparent 26rem),
+        var(--paper);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+    }
 
-    /* ---- Functional aliases ---- */
-    --bg:        var(--paper);
-    --fg:        var(--ink);
-    --fg-muted:  var(--ink-2);
-    --primary:   var(--marigold);
-    --on-primary:#FFFFFF;
-    --focus-ring: 0 0 0 3px rgba(232,146,12,.38);
+    button, input { font: inherit; }
 
-    /* ---- Spacing (4pt base) ---- */
-    --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
-    --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
-    --sp-12: 48px; --sp-16: 64px; --sp-20: 80px; --sp-24: 96px;
+    button { -webkit-tap-highlight-color: transparent; }
 
-    /* ---- Radii ---- */
-    --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+    :focus-visible {
+      outline: 3px solid var(--focus-ring-color);
+      outline-offset: 3px;
+    }
 
-    /* ---- Elevation ---- */
-    --shadow-sm: 0 1px 2px rgba(33,30,26,.06), 0 1px 1px rgba(33,30,26,.04);
-    --shadow-md: 0 4px 16px rgba(33,30,26,.08), 0 1px 3px rgba(33,30,26,.05);
-    --shadow-lg: 0 16px 40px rgba(33,30,26,.12), 0 3px 8px rgba(33,30,26,.06);
-    --shadow-marigold: 0 8px 22px rgba(232,146,12,.28);
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 247, 240, .85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
 
-    /* ---- Type scale ---- */
-    --display-font:  clamp(48px, 6vw, 72px);
-    --h1: 44px; --h2: 33px; --h3: 25px; --h4: 19px;
-    --body-lg: 18px; --body: 16px; --body-sm: 14px;
-    --caption: 13px; --overline: 12px;
-  }
+    .topbar-inner,
+    .page {
+      width: min(1100px, calc(100% - 40px));
+      margin: 0 auto;
+    }
 
-  /* ---- semantic element helpers used here ---- */
-  .edu-overline {
-    font-family: var(--font-mono); font-weight: 500; font-size: var(--overline);
-    letter-spacing: .14em; text-transform: uppercase; color: var(--marigold-ink);
-  }
-  .edu-mono { font-family: var(--font-mono); }
+    .topbar-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 0;
+    }
 
-  /* ============================================================
-     App styles — all colours via var(--…) tokens, no raw hex
-     ============================================================ */
-  * { box-sizing: border-box; }
-  body.edu {
-    margin: 0; background: var(--paper); color: var(--ink);
-    font-family: var(--font-sans); line-height: 1.6;
-  }
-  .shell { max-width: 1100px; margin: 0 auto; padding: 0 var(--sp-8); }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-  /* Branded top menu */
-  .edu-header {
-    position: sticky; top: 0; z-index: 50; width: 100%;
-    background: rgba(251, 247, 240, 0.85);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--line);
-  }
-  .edu-header-inner {
-    max-width: 1100px; margin: 0 auto;
-    padding: 15px var(--sp-8); display: flex; align-items: center; gap: 12px;
-  }
-  .edu-logo { width: 32px; height: 32px; display: block; }
-  .edu-wordmark { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; color: var(--ink); }
-  .edu-tag {
-    font-family: var(--font-mono); font-weight: 500; font-size: 11px;
-    letter-spacing: .14em; text-transform: uppercase; color: var(--teal-ink);
-    background: var(--teal-soft); padding: 4px 9px; border-radius: var(--r-pill);
-  }
+    .edu-logo { width: 32px; height: 32px; display: block; }
 
-  /* Page header scheme */
-  .page-header { text-align: center; padding: var(--sp-12) 0 var(--sp-6); }
-  .page-header .edu-overline { display: block; margin-bottom: var(--sp-3); }
-  .app-title {
-    font-family: var(--font-display); font-weight: 800;
-    font-size: clamp(2rem, 4.5vw, 2.85rem); letter-spacing: -.025em;
-    line-height: 1.05; color: var(--ink); margin: 0 0 var(--sp-4);
-  }
-  .edu-lead { font-size: 1.0625rem; color: var(--ink-2); max-width: 36rem; margin: 0 auto; }
+    .edu-wordmark {
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -.02em;
+    }
 
-  /* Controls */
-  .controls {
-    display: flex; gap: var(--sp-3); flex-wrap: wrap; align-items: center;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--r-lg); padding: var(--sp-4) var(--sp-5);
-    box-shadow: var(--shadow-sm); margin-bottom: var(--sp-6);
-  }
-  .controls input[type="text"] {
-    flex: 1 1 320px; min-width: 0;
-    font-family: var(--font-sans); font-size: var(--body);
-    color: var(--ink); background: var(--paper);
-    border: 1px solid var(--line-2); border-radius: var(--r-pill);
-    padding: 12px 18px;
-  }
-  .controls input[type="text"]::placeholder { color: var(--ink-3); }
-  .controls input[type="text"]:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--marigold); }
+    .edu-tag {
+      padding: 4px 9px;
+      border-radius: var(--r-pill);
+      color: var(--teal-ink);
+      background: var(--teal-soft);
+      font: 500 11px/1 var(--font-mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
 
-  .edu-btn {
-    font-family: var(--font-display); font-weight: 600; font-size: var(--body);
-    background: var(--marigold); color: var(--on-primary);
-    border: none; border-radius: var(--r-pill); padding: 12px 22px; cursor: pointer;
-    box-shadow: var(--shadow-marigold);
-    transition: background .12s ease, transform .12s cubic-bezier(.32,.72,.32,1);
-  }
-  .edu-btn:hover { background: var(--marigold-600); }
-  .edu-btn:active { transform: scale(.96); }
-  .edu-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
 
-  .edu-btn-ghost {
-    font-family: var(--font-display); font-weight: 600; font-size: var(--body);
-    background: var(--teal-soft); color: var(--teal-ink);
-    border: none; border-radius: var(--r-pill); padding: 12px 20px; cursor: pointer;
-    transition: background .12s ease, transform .12s cubic-bezier(.32,.72,.32,1);
-  }
-  .edu-btn-ghost:hover { background: var(--teal-600); color: var(--on-primary); }
-  .edu-btn-ghost:active { transform: scale(.96); }
-  .edu-btn-ghost:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .lab-label {
+      color: var(--ink-3);
+      font: 500 11px/1 var(--font-mono);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
 
-  /* Optional API key disclosure */
-  .apikey {
-    margin-bottom: var(--sp-6); border: 1px solid var(--line);
-    border-radius: var(--r-md); background: var(--surface); padding: 2px 16px;
-    box-shadow: var(--shadow-sm);
-  }
-  .apikey summary {
-    cursor: pointer; list-style: revert;
-    font-family: var(--font-mono); font-size: var(--body-sm);
-    letter-spacing: .02em; color: var(--ink-2); padding: 10px 0;
-  }
-  .apikey summary:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-xs); }
-  .apikey-hint { font-size: var(--body-sm); color: var(--ink-2); line-height: 1.55; margin: 2px 0 12px; }
-  .apikey-row { display: flex; gap: var(--sp-3); flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-  .apikey-row input {
-    flex: 1 1 240px; min-width: 0;
-    font-family: var(--font-mono); font-size: var(--body-sm); color: var(--ink);
-    background: var(--paper); border: 1px solid var(--line-2);
-    border-radius: var(--r-pill); padding: 9px 16px;
-  }
-  .apikey-row input:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--marigold); }
-  .apikey-clear {
-    font-family: var(--font-sans); font-size: var(--body-sm); background: none;
-    border: none; color: var(--ink-3); cursor: pointer; text-decoration: underline; padding: 6px;
-  }
-  .apikey-clear:hover { color: var(--danger-ink); }
-  .apikey-clear:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-xs); }
-  .apikey-status { font-size: var(--body-sm); color: var(--success-ink); min-height: 1.1em; margin: 0 0 10px; }
+    .lang-switch {
+      display: flex;
+      overflow: hidden;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-pill);
+      background: var(--surface);
+    }
 
-  /* Decoupling note between panels */
-  .note {
-    font-size: var(--body-sm); color: var(--ink-2); line-height: 1.5;
-    display: flex; gap: var(--sp-2); align-items: flex-start;
-  }
-  .note .ic { color: var(--marigold-ink); flex: none; font-weight: 700; }
-  .note-decoupled {
-    background: var(--marigold-soft); color: var(--marigold-ink);
-    border-radius: var(--r-md); padding: 12px 16px; margin-bottom: var(--sp-6);
-    font-size: var(--body-sm); text-align: center; line-height: 1.5;
-  }
+    .lang-btn {
+      border: 0;
+      padding: 6px 11px;
+      color: var(--ink-3);
+      background: transparent;
+      font: 500 11px/1 var(--font-mono);
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: background .16s ease, color .16s ease;
+    }
 
-  /* Stacked panels — Waga on top, preview below (full width) */
-  .panels { display: grid; grid-template-columns: 1fr; gap: var(--sp-6); align-items: start; }
-  .panel {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--r-xl); padding: var(--sp-6) var(--sp-6) var(--sp-5);
-    box-shadow: var(--shadow-md);
-  }
-  .panel-title { font-family: var(--font-display); font-weight: 700; font-size: var(--h3); color: var(--ink); margin: 0 0 var(--sp-2); }
-  .panel-sub { font-size: var(--body-sm); color: var(--ink-3); margin: 0 0 var(--sp-5); }
+    .lang-btn[aria-pressed="true"] {
+      color: var(--paper);
+      background: var(--ink);
+    }
 
-  /* Stat blocks */
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-5); }
-  .stat { border-radius: var(--r-lg); padding: 20px 22px; }
-  .stat.req { background: var(--marigold-soft); }
-  .stat.size { background: var(--teal-soft); }
-  .stat .val { font-family: var(--font-display); font-weight: 700; font-size: 38px; line-height: 1; }
-  .stat.req .val { color: var(--marigold-ink); }
-  .stat.size .val { color: var(--teal-ink); }
-  .stat .lbl { font-size: var(--body-sm); color: var(--ink-2); margin-top: 6px; }
+    .hero {
+      padding: 64px 0 44px;
+      text-align: center;
+    }
 
-  /* Bar chart */
-  .breakdown-title { font-family: var(--font-display); font-weight: 600; font-size: var(--h4); color: var(--ink); margin: 0 0 var(--sp-3); }
-  .bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: var(--sp-4); }
-  .bar-row { display: grid; grid-template-columns: 120px 1fr auto; align-items: center; gap: 10px; }
-  .bar-row .name { font-size: var(--body-sm); color: var(--ink-2); }
-  .bar-track { display: block; background: var(--paper-3); border-radius: var(--r-pill); height: 16px; overflow: hidden; }
-  .bar-fill { display: block; height: 100%; border-radius: var(--r-pill); min-width: 3px; }
-  .bar-row .amt { font-family: var(--font-mono); font-size: var(--caption); color: var(--ink-2); white-space: nowrap; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 16px;
+      color: var(--marigold-ink);
+      font: 500 12px/1 var(--font-mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
 
-  .biggest { background: var(--paper-2); border-radius: var(--r-md); padding: 12px 16px; margin-bottom: var(--sp-4); font-size: var(--body-sm); color: var(--ink-2); }
-  .biggest strong { color: var(--ink); }
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--marigold);
+      box-shadow: 0 0 0 5px rgba(232, 146, 12, .16);
+    }
 
-  /* a11y data table */
-  .data-table { width: 100%; border-collapse: collapse; font-size: var(--body-sm); margin-bottom: var(--sp-4); }
-  .data-table caption { text-align: left; font-size: var(--caption); color: var(--ink-3); margin-bottom: 6px; }
-  .data-table th, .data-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  .data-table td.num { text-align: right; font-family: var(--font-mono); }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    h1 {
+      max-width: 22ch;
+      margin: 0 auto;
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(2.6rem, 6vw, 4.4rem);
+      line-height: 1.02;
+      letter-spacing: -.025em;
+    }
 
-  /* States */
-  .state { color: var(--ink-2); font-size: var(--body-sm); padding: var(--sp-6) 0; text-align: center; }
-  .state.err { color: var(--danger-ink); background: var(--danger-soft); border-radius: var(--r-md); padding: 14px 16px; }
-  .spinner {
-    width: 22px; height: 22px; border-radius: 50%;
-    border: 3px solid var(--paper-3); border-top-color: var(--marigold);
-    animation: spin 0.8s linear infinite; margin: 0 auto var(--sp-3);
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    .hero-copy {
+      max-width: 36rem;
+      margin: 18px auto 0;
+      color: var(--ink-2);
+      font-size: clamp(1rem, 1.5vw, 1.125rem);
+      line-height: 1.6;
+    }
 
-  /* Toggles (appearance) */
-  .layers-hint { font-size: var(--body-sm); color: var(--ink-2); margin: 0 0 var(--sp-3); }
-  .toggles {
-    background: var(--teal-soft); border-radius: var(--r-lg);
-    padding: 16px 18px; margin-bottom: var(--sp-5);
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px;
-  }
-  .toggle { display: flex; align-items: center; gap: 10px; font-size: var(--body-sm); color: var(--teal-ink); cursor: pointer; }
-  .toggle input { width: 18px; height: 18px; accent-color: var(--teal); cursor: pointer; }
-  .toggle input:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
+    .hero-note {
+      max-width: 38rem;
+      margin: 26px auto 0;
+      padding: 12px 20px;
+      border-radius: var(--r-lg);
+      color: var(--teal-ink);
+      background: var(--teal-soft);
+      font-size: 14px;
+      line-height: 1.55;
+    }
 
-  .preview-frame {
-    width: 100%; height: clamp(480px, 78vh, 900px); border: 1px solid var(--line-2);
-    border-radius: var(--r-md); background: var(--surface);
-  }
-  .spa-warning {
-    background: var(--warning-soft); color: var(--warning-ink);
-    border-radius: var(--r-md); padding: 12px 16px; margin-top: var(--sp-4);
-    font-size: var(--body-sm); line-height: 1.5;
-  }
-  .panel-note { margin-top: var(--sp-4); }
+    .hero-note strong { color: var(--teal-ink); }
 
-  /* Mode switch — real-site analysis vs. example */
-  .mode-switch {
-    display: flex; gap: 4px; width: fit-content; margin: 0 auto var(--sp-6);
-    background: var(--paper-2); border: 1px solid var(--line);
-    border-radius: var(--r-pill); padding: 4px;
-  }
-  .mode-btn {
-    font-family: var(--font-display); font-weight: 600; font-size: var(--body-sm);
-    cursor: pointer; background: none; border: none; color: var(--ink-2);
-    padding: 9px 18px; border-radius: var(--r-pill);
-    transition: background .12s ease, color .12s ease;
-  }
-  .mode-btn:hover { color: var(--ink); }
-  .mode-btn[aria-selected="true"] { background: var(--marigold); color: var(--on-primary); }
-  .mode-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .lab {
+      overflow: hidden;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-xl);
+      background: var(--surface);
+      box-shadow: var(--shadow-lg);
+    }
 
-  .files-sizes {
-    font-family: var(--font-mono); font-size: var(--caption); color: var(--ink-2);
-    background: var(--paper-2); border-radius: var(--r-sm);
-    padding: 8px 12px; margin: 0 0 var(--sp-3);
-  }
+    .lab-toolbar {
+      min-height: 68px;
+      padding: 14px 18px 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
 
-  /* Lesson — "Jak zbudowana jest strona?" */
-  .lesson { margin-top: var(--sp-6); }
-  .stages { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-5) 0; }
-  .stage-btn {
-    font-family: var(--font-mono); font-size: var(--body-sm); cursor: pointer;
-    background: var(--paper-2); color: var(--ink-2);
-    border: 1px solid var(--line); border-radius: var(--r-pill); padding: 9px 16px;
-    transition: background .12s ease, color .12s ease;
-  }
-  .stage-btn:hover { background: var(--paper-3); }
-  .stage-btn[aria-selected="true"] { background: var(--marigold); color: var(--on-primary); border-color: var(--marigold); }
-  .stage-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .status {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-  .lesson-grid { display: block; }
-  .lesson-frame {
-    width: 100%; height: 460px; border: 1px solid var(--line-2);
-    border-radius: var(--r-md); background: var(--surface);
-  }
-  .lesson-explain {
-    background: var(--teal-soft); border-radius: var(--r-lg);
-    padding: 18px 22px; color: var(--teal-ink); margin-bottom: var(--sp-5);
-  }
-  .lesson-explain h3 { font-family: var(--font-display); font-size: var(--h4); margin: 0 0 var(--sp-2); color: var(--teal-ink); }
-  .lesson-explain p { margin: 0 0 var(--sp-3); font-size: var(--body-sm); line-height: 1.55; color: var(--teal-ink); }
-  /* explanation above the preview: flow bullets horizontally to save vertical space */
-  .lesson-explain ul { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style-position: inside; margin: 0; padding-left: 18px; font-size: var(--body-sm); line-height: 1.6; color: var(--teal-ink); }
-  .lesson-explain li { margin-bottom: 4px; }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 5px rgba(47, 143, 91, .12);
+      transition: background .2s ease;
+    }
 
-  /* File viewer */
-  .files { margin-top: var(--sp-6); border-top: 1px solid var(--line); padding-top: var(--sp-5); }
-  .files h3 { font-family: var(--font-display); font-size: var(--h4); margin: 0 0 var(--sp-2); color: var(--ink); }
-  .file-tabs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0; }
-  .file-tab {
-    font-family: var(--font-mono); font-size: var(--body-sm); cursor: pointer;
-    background: none; border: none; color: var(--ink-3);
-    padding: 6px 4px; border-bottom: 2px solid transparent;
-  }
-  .file-tab:hover { color: var(--ink-2); }
-  .file-tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--teal); }
-  .file-tab:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-xs); }
-  .file-role { font-size: var(--body-sm); color: var(--ink-2); margin: 0 0 var(--sp-3); }
-  .file-code {
-    background: var(--ink); border-radius: var(--r-lg); padding: 18px 20px; margin: 0;
-    max-height: 380px; overflow: auto;
-  }
-  .file-code code {
-    font-family: var(--font-mono); font-size: var(--caption); line-height: 1.6;
-    color: var(--paper); white-space: pre; background: none; padding: 0;
-  }
+    .status.loading .status-dot {
+      background: var(--marigold);
+      animation: pulse 1s ease infinite;
+    }
 
-  /* Responsive */
-  @media (max-width: 860px) {
-    .shell { padding: 0 var(--sp-5); }
-    .bar-row { grid-template-columns: 96px 1fr auto; }
-  }
-  @media (max-width: 520px) {
-    .toggles { grid-template-columns: 1fr; }
-    .controls input[type="text"] { flex-basis: 100%; }
-    .bar-row { grid-template-columns: 84px 1fr; }
-    .bar-row .amt { grid-column: 2; text-align: right; }
-  }
+    .status-copy { min-width: 0; }
+    .status-title { display: block; font-weight: 700; font-size: 14px; }
+    .status-detail {
+      display: block;
+      overflow: hidden;
+      color: var(--ink-2);
+      font: 400 11px/1.5 var(--font-mono);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .request-btn {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 0;
+      border-radius: var(--r-pill);
+      padding: 12px 20px;
+      color: var(--on-primary);
+      background: var(--marigold);
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: var(--shadow-marigold);
+      transition: background .16s ease, transform .12s cubic-bezier(.32, .72, .32, 1);
+    }
+
+    .request-btn:hover { background: var(--marigold-600); }
+    .request-btn:active { transform: scale(.96); }
+    .request-btn svg { width: 16px; height: 16px; }
+
+    .request-btn kbd {
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, .22);
+      font: 500 10px/1 var(--font-mono);
+    }
+
+    .lab-stage {
+      min-height: 620px;
+      display: grid;
+      grid-template-columns: minmax(250px, 300px) minmax(96px, .38fr) minmax(0, 1.6fr);
+      align-items: stretch;
+    }
+
+    .server-panel,
+    .browser-panel { padding: 26px; }
+
+    .server-panel {
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .panel-kicker {
+      margin: 0 0 5px;
+      font: 500 10px/1.4 var(--font-mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .server-panel .panel-kicker { color: var(--dark-muted); }
+
+    .panel-heading {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: -.015em;
+    }
+
+    .server-address {
+      margin: 10px 0 23px;
+      color: var(--dark-muted);
+      font: 400 11px/1.5 var(--font-mono);
+    }
+
+    .server-rack {
+      padding: 10px;
+      border: 1px solid var(--dark-line);
+      border-radius: var(--r-md);
+      background: var(--dark-well);
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, .25);
+    }
+
+    .file-toggle {
+      --file-color: var(--html);
+      min-height: 84px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      padding: 12px;
+      border: 1px solid var(--dark-line);
+      border-radius: var(--r-sm);
+      background: var(--dark-card);
+      cursor: pointer;
+      transition: opacity .18s ease, border-color .18s ease;
+    }
+
+    .file-toggle:last-child { margin-bottom: 0; }
+    .file-toggle:hover { border-color: var(--dark-line-strong); }
+    .file-toggle[data-file="css"] { --file-color: var(--css); }
+    .file-toggle[data-file="js"] { --file-color: var(--js); }
+    .file-toggle[data-file="image"] { --file-color: var(--image); }
+    .file-toggle.is-off { opacity: .43; }
+
+    .file-toggle input {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      opacity: 0;
+    }
+
+    .file-toggle:has(input:focus-visible) {
+      outline: 3px solid var(--focus-ring-color);
+      outline-offset: 3px;
+      border-color: var(--marigold);
+    }
+
+    .file-icon {
+      width: 36px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      border-radius: 5px 9px 5px 5px;
+      color: var(--on-primary);
+      background: var(--file-color);
+      font: 500 9px/1 var(--font-mono);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .file-icon::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      border-style: solid;
+      border-width: 0 9px 9px 0;
+      border-color: transparent rgba(255, 255, 255, .52) transparent transparent;
+    }
+
+    .file-meta { min-width: 0; }
+    .file-name { display: block; font: 500 12px/1.4 var(--font-mono); }
+    .file-role { display: block; color: var(--dark-muted); font-size: 11px; line-height: 1.4; }
+
+    .switch {
+      width: 35px;
+      height: 20px;
+      position: relative;
+      border-radius: var(--r-pill);
+      background: var(--dark-control);
+      transition: background .18s ease;
+    }
+
+    .switch::after {
+      content: "";
+      width: 14px;
+      height: 14px;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      border-radius: 50%;
+      background: var(--on-primary);
+      transition: transform .18s ease;
+    }
+
+    input:checked + .file-icon + .file-meta + .switch { background: var(--file-color); }
+    input:checked + .file-icon + .file-meta + .switch::after { transform: translateX(15px); }
+
+    .server-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .text-btn {
+      border: 1px solid var(--dark-line);
+      border-radius: var(--r-pill);
+      padding: 8px 11px;
+      color: var(--dark-muted);
+      background: transparent;
+      font-size: 11px;
+      cursor: pointer;
+      transition: color .16s ease, border-color .16s ease;
+    }
+
+    .text-btn:hover { color: var(--paper); border-color: var(--dark-line-strong); }
+
+    .network-panel {
+      min-width: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 26px 10px;
+      background: var(--paper-2);
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+
+    .network-label {
+      position: absolute;
+      top: 28px;
+      color: var(--ink-3);
+      font: 500 9px/1.4 var(--font-mono);
+      letter-spacing: .12em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .request-line {
+      position: relative;
+      width: 2px;
+      height: 72%;
+      min-height: 380px;
+      background: repeating-linear-gradient(to bottom, var(--line-2) 0 5px, transparent 5px 11px);
+    }
+
+    .request-line::before,
+    .request-line::after {
+      position: absolute;
+      left: 50%;
+      width: max-content;
+      transform: translateX(-50%);
+      padding: 5px 8px;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-xs);
+      color: var(--ink-2);
+      background: var(--paper);
+      font: 400 9px/1 var(--font-mono);
+    }
+
+    .request-line::before { content: "GET /"; top: 4%; }
+    .request-line::after { content: "200 OK"; bottom: 4%; }
+
+    .direction {
+      position: absolute;
+      left: 50%;
+      color: var(--ink-3);
+      transform: translateX(-50%);
+      font-size: 18px;
+    }
+
+    .direction.up { top: -7px; }
+    .direction.down { bottom: -7px; }
+
+    .packet {
+      --packet-color: var(--html);
+      width: 44px;
+      height: 25px;
+      position: absolute;
+      left: 50%;
+      top: 8%;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--paper-2);
+      border-radius: 5px;
+      color: var(--on-primary);
+      background: var(--packet-color);
+      box-shadow: var(--shadow-sm);
+      font: 500 8px/1 var(--font-mono);
+      opacity: 0;
+      transform: translate(-50%, -50%);
+    }
+
+    .packet[data-file="css"] { --packet-color: var(--css); }
+    .packet[data-file="js"] { --packet-color: var(--js); }
+    .packet[data-file="image"] { --packet-color: var(--image); }
+    .packet.fly { animation: deliver 1.25s cubic-bezier(.32, .72, .25, 1) forwards; }
+
+    .browser-panel {
+      min-width: 0;
+      background: var(--paper-3);
+    }
+
+    .browser-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .browser-panel .panel-kicker { color: var(--ink-3); }
+
+    .paint-state {
+      color: var(--ink-2);
+      font: 400 10px/1.4 var(--font-mono);
+      text-align: right;
+    }
+
+    .browser {
+      overflow: hidden;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+    }
+
+    .browser-chrome {
+      height: 48px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) 20px;
+      align-items: center;
+      gap: 13px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .window-dots { display: flex; gap: 5px; }
+    .window-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); }
+    .window-dots span:first-child { background: var(--coral); }
+    .window-dots span:nth-child(2) { background: var(--marigold); }
+    .window-dots span:nth-child(3) { background: var(--success); }
+
+    .address-bar {
+      min-width: 0;
+      padding: 7px 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--r-xs);
+      color: var(--ink-3);
+      background: var(--surface);
+      font: 400 10px/1 var(--font-mono);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .browser-menu { color: var(--ink-3); font-weight: 800; letter-spacing: 2px; }
+
+    .preview {
+      width: 100%;
+      height: 480px;
+      display: block;
+      border: 0;
+      background: var(--surface);
+    }
+
+    .browser-foot {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 15px;
+    }
+
+    .resource-pill {
+      --pill-color: var(--html);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-pill);
+      color: var(--ink-2);
+      background: rgba(255, 255, 255, .6);
+      font: 400 9px/1 var(--font-mono);
+      transition: opacity .18s ease;
+    }
+
+    .resource-pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--pill-color);
+    }
+
+    .resource-pill[data-file="css"] { --pill-color: var(--css); }
+    .resource-pill[data-file="js"] { --pill-color: var(--js); }
+    .resource-pill[data-file="image"] { --pill-color: var(--image); }
+    .resource-pill.is-off { opacity: .3; text-decoration: line-through; }
+
+    .explainer {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .explain-step {
+      min-height: 150px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      padding: 25px;
+      border-right: 1px solid var(--line);
+    }
+
+    .explain-step:last-child { border-right: 0; }
+
+    .step-no {
+      width: 31px;
+      height: 31px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--marigold-ink);
+      background: var(--marigold-soft);
+      font: 500 11px/1 var(--font-mono);
+    }
+
+    .explain-step h3 { margin: 3px 0 7px; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+    .explain-step p { margin: 0; color: var(--ink-2); font-size: 12px; line-height: 1.55; }
+
+    .inspect {
+      margin: 32px 0 80px;
+      display: grid;
+      grid-template-columns: minmax(220px, .6fr) minmax(0, 1.4fr);
+      overflow: hidden;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-md);
+    }
+
+    .inspect-copy { padding: 28px; }
+    .inspect-copy .panel-kicker { color: var(--marigold-ink); }
+    .inspect-copy p { color: var(--ink-2); font-size: 13px; line-height: 1.6; }
+
+    .code-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
+
+    .code-tab {
+      --tab-color: var(--html);
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-pill);
+      padding: 7px 10px;
+      color: var(--ink-2);
+      background: transparent;
+      font: 500 10px/1 var(--font-mono);
+      cursor: pointer;
+      transition: background .16s ease, color .16s ease, border-color .16s ease;
+    }
+
+    .code-tab[data-file="css"] { --tab-color: var(--css); }
+    .code-tab[data-file="js"] { --tab-color: var(--js); }
+    .code-tab[data-file="image"] { --tab-color: var(--image); }
+    .code-tab[aria-selected="true"] { color: var(--on-primary); background: var(--tab-color); border-color: var(--tab-color); }
+
+    .code-window {
+      min-width: 0;
+      min-height: 320px;
+      padding: 24px 26px;
+      overflow: auto;
+      color: var(--paper-3);
+      background: var(--ink);
+    }
+
+    .code-window pre { margin: 0; }
+    .code-window code { font: 400 11px/1.75 var(--font-mono); white-space: pre; }
+
+    .sr-only {
+      width: 1px;
+      height: 1px;
+      position: absolute;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes deliver {
+      0% { top: 10%; opacity: 0; transform: translate(-50%, -50%) scale(.7); }
+      14% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { top: 90%; opacity: 0; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes pulse {
+      50% { transform: scale(.78); box-shadow: 0 0 0 9px rgba(232, 146, 12, .08); }
+    }
+
+    @media (min-width: 901px) {
+      .request-line { transform: rotate(-90deg); }
+      .request-line::before,
+      .request-line::after,
+      .packet { transform: translate(-50%, -50%) rotate(90deg); }
+      .packet.fly { animation-name: deliver-horizontal; }
+      .direction { transform: translateX(-50%) rotate(90deg); }
+
+      @keyframes deliver-horizontal {
+        0% { top: 10%; opacity: 0; transform: translate(-50%, -50%) rotate(90deg) scale(.7); }
+        14% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { top: 90%; opacity: 0; transform: translate(-50%, -50%) rotate(90deg) scale(1); }
+      }
+    }
+
+    @media (max-width: 1000px) {
+      .lab-stage { grid-template-columns: 250px 88px minmax(0, 1fr); }
+      .server-panel, .browser-panel { padding: 21px; }
+    }
+
+    @media (max-width: 900px) {
+      .hero { padding-top: 54px; }
+      .lab-stage { grid-template-columns: 1fr; }
+      .network-panel { min-height: 230px; padding-top: 56px; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .request-line { width: 2px; height: 170px; min-height: 0; }
+      .network-label { top: 16px; }
+      .server-rack { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .file-toggle { margin: 0; }
+      .preview { height: 510px; }
+    }
+
+    @media (max-width: 680px) {
+      .topbar-inner, .page { width: min(100% - 24px, 1100px); }
+      .lab-label { display: none; }
+      .edu-wordmark { font-size: 19px; }
+      .hero { padding: 44px 0 30px; }
+      h1 { font-size: clamp(2.3rem, 11vw, 3.4rem); }
+      .hero-copy { margin-top: 16px; }
+      .lab { border-radius: var(--r-lg); }
+      .lab-toolbar { align-items: flex-start; padding: 14px; }
+      .status-detail { max-width: 190px; }
+      .request-btn span, .request-btn kbd { display: none; }
+      .request-btn { padding: 12px; }
+      .server-panel, .browser-panel { padding: 18px 14px; }
+      .server-rack { grid-template-columns: 1fr; }
+      .file-toggle { min-height: 72px; }
+      .browser-heading { align-items: flex-start; }
+      .preview { height: 630px; }
+      .explainer { grid-template-columns: 1fr; }
+      .explain-step { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .explain-step:last-child { border-bottom: 0; }
+      .inspect { grid-template-columns: 1fr; }
+      .code-window { max-height: 350px; min-height: 280px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
-
-<body class="edu">
-  <!-- Branded top menu -->
-  <header class="edu-header">
-    <div class="edu-header-inner">
-      <img class="edu-logo" alt="edulab" src="data:image/png;base64,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">
-      <span class="edu-wordmark">edulab</span>
-      <span class="edu-tag">demo lab</span>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img class="edu-logo" src="data:image/png;base64,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" alt="edulab">
+        <span class="edu-wordmark">edulab</span>
+        <span class="edu-tag">demo lab</span>
+      </div>
+      <div class="topbar-right">
+        <span class="lab-label">web anatomy · 01</span>
+        <div class="lang-switch" role="group" aria-label="Język / Language">
+          <button class="lang-btn" type="button" data-lang="pl" aria-pressed="true">PL</button>
+          <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main class="shell">
-    <!-- Page header scheme -->
-    <div class="page-header">
-      <span class="edu-overline">Interaktywne demo</span>
-      <h1 class="app-title" id="appName">Anatomia strony WWW</h1>
-      <p class="edu-lead" id="tagline"></p>
-    </div>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow" data-i18n="eyebrow">Strona rozłożona na części</p>
+      <h1 id="page-title" data-i18n="title">Każda strona to przesyłka.</h1>
+      <p class="hero-copy" data-i18n="lead"></p>
+      <aside class="hero-note"><strong data-i18n="noteLabel"></strong> <span data-i18n="noteBody"></span></aside>
+    </section>
 
-    <!-- Mode switch: show EITHER the real-site analyzer OR the Rogalik example -->
-    <div class="mode-switch" id="modeSwitch" role="tablist" aria-label="Tryb">
-      <button type="button" class="mode-btn" id="modeRealBtn" data-mode="real" role="tab"></button>
-      <button type="button" class="mode-btn" id="modeExampleBtn" data-mode="example" role="tab"></button>
-    </div>
-
-    <!-- ===== Tryb: analiza prawdziwej strony ===== -->
-    <div id="realMode">
-    <!-- Controls -->
-    <form class="controls" id="form" autocomplete="off">
-      <input type="text" id="url" inputmode="url" autocapitalize="off" spellcheck="false" />
-      <button type="submit" class="edu-btn" id="analyzeBtn"></button>
-      <button type="button" class="edu-btn-ghost" id="sampleBtn"></button>
-    </form>
-
-    <!-- Optional PageSpeed API key — stored only in this browser's localStorage -->
-    <details class="apikey" id="apiKeyBox">
-      <summary id="apiKeyTitle"></summary>
-      <p class="apikey-hint" id="apiKeyHint"></p>
-      <div class="apikey-row">
-        <input type="password" id="apiKey" autocomplete="off" spellcheck="false" />
-        <button type="button" class="edu-btn-ghost" id="apiKeySaveBtn"></button>
-        <button type="button" class="apikey-clear" id="apiKeyClearBtn"></button>
-      </div>
-      <p class="apikey-status" id="apiKeyStatus" aria-live="polite"></p>
-    </details>
-
-    <!-- Decoupling note -->
-    <p class="note-decoupled" id="noteDecoupled"></p>
-
-    <!-- Panels -->
-    <div class="panels">
-      <!-- Panel A — Waga -->
-      <section class="panel" id="panelA" aria-labelledby="panelATitle">
-        <h2 class="panel-title" id="panelATitle"></h2>
-        <p class="panel-sub" id="panelASub"></p>
-        <div id="weightBody" aria-live="polite"></div>
-        <p class="note panel-note"><span class="ic" aria-hidden="true">ⓘ</span><span id="noteWeight"></span></p>
-      </section>
-
-      <!-- Panel B — Wygląd -->
-      <section class="panel" id="panelB" aria-labelledby="panelBTitle">
-        <h2 class="panel-title" id="panelBTitle"></h2>
-        <p class="layers-hint" id="layersHint"></p>
-        <div class="toggles" id="toggles">
-          <label class="toggle"><input type="checkbox" id="tCss" checked> <span id="lblCss"></span></label>
-          <label class="toggle"><input type="checkbox" id="tJs" checked> <span id="lblJs"></span></label>
-          <label class="toggle"><input type="checkbox" id="tImg" checked> <span id="lblImg"></span></label>
-          <label class="toggle"><input type="checkbox" id="tFonts" checked> <span id="lblFonts"></span></label>
+    <section class="lab" aria-label="Interactive website delivery lab">
+      <div class="lab-toolbar">
+        <div class="status" id="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-copy">
+            <span class="status-title" id="statusTitle"></span>
+            <span class="status-detail" id="statusDetail"></span>
+          </span>
         </div>
-        <iframe class="preview-frame" id="preview" title="Podgląd strony" sandbox="allow-scripts"></iframe>
-        <div class="spa-warning" id="spaWarning" hidden></div>
-        <p class="note panel-note"><span class="ic" aria-hidden="true">ⓘ</span><span id="noteRender"></span></p>
-      </section>
-    </div>
-    </div><!-- /#realMode -->
-
-    <!-- ===== Tryb: przykład „Rogalik” ===== -->
-    <div id="exampleMode" hidden>
-    <!-- Lesson — "Jak zbudowana jest strona?" (example: Rogalik, 3 files) -->
-    <section class="panel lesson" id="lesson" aria-labelledby="lessonTitle">
-      <h2 class="panel-title" id="lessonTitle"></h2>
-      <p class="panel-sub" id="lessonSub"></p>
-
-      <!-- Stage stepper -->
-      <div class="stages" id="stages" role="tablist" aria-label="Etapy budowy strony"></div>
-
-      <div class="lesson-grid">
-        <aside class="lesson-explain">
-          <h3 id="stageName"></h3>
-          <p id="stageDesc"></p>
-          <ul id="stageAdds"></ul>
-        </aside>
-        <iframe class="lesson-frame" id="lessonFrame" title="Podgląd etapu"></iframe>
+        <button class="request-btn" id="requestButton" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg>
+          <span data-i18n="btnRequest"></span>
+          <kbd aria-hidden="true">R</kbd>
+        </button>
       </div>
 
-      <!-- File viewer -->
-      <div class="files">
-        <h3 id="filesTitle"></h3>
-        <p class="panel-sub" id="filesHint"></p>
-        <p class="files-sizes" id="filesSizes"></p>
-        <div class="file-tabs" id="fileTabs" role="tablist" aria-label="Pliki strony Rogalik"></div>
-        <p class="file-role" id="fileRole"></p>
-        <pre class="file-code"><code id="fileCode"></code></pre>
+      <div class="lab-stage">
+        <section class="server-panel" aria-labelledby="server-title">
+          <p class="panel-kicker" data-i18n="kickerServer"></p>
+          <h2 class="panel-heading" id="server-title" data-i18n="serverTitle"></h2>
+          <p class="server-address">/var/www/sunroom.studio/</p>
+
+          <div class="server-rack" id="serverRack">
+            <label class="file-toggle" data-file="html">
+              <input type="checkbox" value="html" checked>
+              <span class="file-icon">HTML</span>
+              <span class="file-meta"><span class="file-name">index.html</span><span class="file-role" data-i18n="roleHtml"></span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <label class="file-toggle" data-file="css">
+              <input type="checkbox" value="css" checked>
+              <span class="file-icon">CSS</span>
+              <span class="file-meta"><span class="file-name">styles.css</span><span class="file-role" data-i18n="roleCss"></span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <label class="file-toggle" data-file="js">
+              <input type="checkbox" value="js" checked>
+              <span class="file-icon">JS</span>
+              <span class="file-meta"><span class="file-name">app.js</span><span class="file-role" data-i18n="roleJs"></span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            <label class="file-toggle" data-file="image">
+              <input type="checkbox" value="image" checked>
+              <span class="file-icon">IMG</span>
+              <span class="file-meta"><span class="file-name">hero.svg</span><span class="file-role" data-i18n="roleImage"></span></span>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <div class="server-actions" aria-label="Resource presets">
+            <button class="text-btn" type="button" id="allOn" data-i18n="presetAll"></button>
+            <button class="text-btn" type="button" id="htmlOnly" data-i18n="presetHtml"></button>
+            <button class="text-btn" type="button" id="allOff" data-i18n="presetClear"></button>
+          </div>
+        </section>
+
+        <section class="network-panel" aria-label="Internet transfer">
+          <span class="network-label">02 · Internet<br><span data-i18n="networkSub"></span></span>
+          <div class="request-line" id="requestLine" aria-hidden="true">
+            <span class="direction up">⌃</span>
+            <span class="direction down">⌄</span>
+            <span class="packet" data-file="html">HTML</span>
+            <span class="packet" data-file="css">CSS</span>
+            <span class="packet" data-file="js">JS</span>
+            <span class="packet" data-file="image">IMG</span>
+          </div>
+        </section>
+
+        <section class="browser-panel" aria-labelledby="browser-title">
+          <div class="browser-heading">
+            <div><p class="panel-kicker" data-i18n="kickerClient"></p><h2 class="panel-heading" id="browser-title" data-i18n="browserTitle"></h2></div>
+            <span class="paint-state" id="paintState"></span>
+          </div>
+
+          <div class="browser">
+            <div class="browser-chrome" aria-hidden="true">
+              <span class="window-dots"><span></span><span></span><span></span></span>
+              <span class="address-bar" id="addressBar">about:blank</span>
+              <span class="browser-menu">···</span>
+            </div>
+            <iframe class="preview" id="preview" title="Website assembled from the selected files" sandbox=""></iframe>
+          </div>
+
+          <div class="browser-foot" id="resourcePills" aria-label="Browser resource state">
+            <span class="resource-pill" data-file="html" data-i18n="pillHtml"></span>
+            <span class="resource-pill" data-file="css" data-i18n="pillCss"></span>
+            <span class="resource-pill" data-file="js" data-i18n="pillJs"></span>
+            <span class="resource-pill" data-file="image" data-i18n="pillImage"></span>
+          </div>
+        </section>
+      </div>
+
+      <div class="explainer" aria-label="How the request works">
+        <article class="explain-step"><span class="step-no">01</span><div><h3 data-i18n="step1t"></h3><p data-i18n="step1p"></p></div></article>
+        <article class="explain-step"><span class="step-no">02</span><div><h3 data-i18n="step2t"></h3><p data-i18n="step2p"></p></div></article>
+        <article class="explain-step"><span class="step-no">03</span><div><h3 data-i18n="step3t"></h3><p data-i18n="step3p"></p></div></article>
       </div>
     </section>
-    </div><!-- /#exampleMode -->
+
+    <section class="inspect" aria-labelledby="inspect-title">
+      <div class="inspect-copy">
+        <p class="panel-kicker" data-i18n="inspectKicker"></p>
+        <h2 class="panel-heading" id="inspect-title" data-i18n="inspectTitle"></h2>
+        <p data-i18n="inspectCopy"></p>
+        <div class="code-tabs" role="tablist" aria-label="Example source files">
+          <button class="code-tab" id="tab-html" data-file="html" role="tab" aria-selected="true" aria-controls="source-panel" tabindex="0">index.html</button>
+          <button class="code-tab" id="tab-css" data-file="css" role="tab" aria-selected="false" aria-controls="source-panel" tabindex="-1">styles.css</button>
+          <button class="code-tab" id="tab-js" data-file="js" role="tab" aria-selected="false" aria-controls="source-panel" tabindex="-1">app.js</button>
+          <button class="code-tab" id="tab-image" data-file="image" role="tab" aria-selected="false" aria-controls="source-panel" tabindex="-1">hero.svg</button>
+        </div>
+      </div>
+      <div class="code-window" id="source-panel" role="tabpanel" aria-labelledby="tab-html" tabindex="0"><pre><code id="codeContent"></code></pre></div>
+    </section>
   </main>
 
   <script>
-  /* ============================================================
-     PL — single Polish string dictionary (no hard-coded UI English)
-     ============================================================ */
-  // Shorthand for the dozens of element lookups below.
-  const $ = (id) => document.getElementById(id);
-
-  const PL = {
-    appName:        "Anatomia strony WWW",
-    tagline:        "Zobacz, z czego naprawdę zbudowana jest strona internetowa.",
-    urlPlaceholder: "Wklej adres strony, np. https://www.gov.pl",
-    analyze:        "Analizuj",
-    showExample:    "Pokaż przykład",
-    modeReal:       "Analiza strony",
-    modeExample:    "Przykład „Rogalik”",
-    loading:        "Google ładuje i mierzy stronę… to potrwa kilka sekund.",
-    emptyWeight:    "Wpisz adres strony i kliknij „Analizuj”, albo kliknij „Pokaż przykład”.",
-
-    // Panel A — waga
-    weightTitle:    "Waga strony",
-    weightSub:      "Dane z Google PageSpeed Insights (tylko do odczytu).",
-    requests:       "Liczba żądań (plików)",
-    transferred:    "Rozmiar pobrany",
-    total:          "Razem",
-    byType:         "Podział na typy",
-    biggest:        "Największe kategorie",
-    tableCaption:   "Podział wagi strony na typy zasobów",
-    colType:        "Typ zasobu",
-    colReq:         "Żądania",
-    colSize:        "Rozmiar",
-    types: {
-      document: "Dokument (HTML)", stylesheet: "Style (CSS)", script: "Skrypty (JS)",
-      image: "Obrazy", font: "Czcionki", media: "Multimedia", other: "Inne / zewnętrzne",
-    },
-
-    // Panel B — wygląd
-    appearTitle:    "Wygląd strony",
-    loadingPreview: "Wczytuję podgląd strony…",
-    layersHint:     "Wyłączaj warstwy, aby zobaczyć, z czego zbudowana jest strona.",
-    layerCss:       "CSS — wygląd",
-    layerJs:        "JavaScript — interakcja",
-    layerImg:       "Obrazy",
-    layerFonts:     "Czcionki",
-
-    // annotations
-    noteWeight:     "Dane o wadze pochodzą z Google PageSpeed Insights — pomiar wykonano na serwerach Google w warunkach symulowanych, więc liczby mogą różnić się od tego, co pobierze Twoja przeglądarka.",
-    noteRender:     "To przybliżona rekonstrukcja strony — część elementów może się nie wczytać.",
-    noteSpaNoJs:    "Ta strona to aplikacja JavaScript — bez JS pozostaje niemal pusta. Tak wygląda nowoczesna strona, zanim uruchomi się jej kod.",
-    noteDecoupled:  "Wyłączanie warstw zmienia tylko podgląd strony poniżej — liczby wagi (z Google) powyżej pozostają bez zmian.",
-
-    // errors
-    errFetch:       "Nie udało się pobrać strony. Spróbuj innego adresu.",
-    errAuth:        "Ta strona wymaga logowania lub blokuje analizę.",
-    errPsi:         "Nie udało się pobrać danych o wadze strony.",
-    errQuota:       "Wyczerpano dzienny limit zapytań do Google PageSpeed Insights (bez klucza API limit jest mały i wspólny dla wielu osób). Dodaj własny klucz API w polu „Klucz API Google (opcjonalny)” powyżej — wtedy korzystasz z własnego limitu.",
-
-    // Klucz API PageSpeed (opcjonalny)
-    apiKeyTitle:       "Klucz API Google (opcjonalny)",
-    apiKeyActive:      "Klucz API Google (opcjonalny) — aktywny ✓",
-    apiKeyHint:        "Własny klucz PageSpeed Insights zwiększa limit zapytań. Klucz zapisujemy wyłącznie w tej przeglądarce (localStorage) — nie trafia do kodu strony ani na żaden serwer. Pamiętaj, aby w Google Cloud ograniczyć klucz do adresów Twojej domeny i wyłącznie do „PageSpeed Insights API”.",
-    apiKeyPlaceholder: "Wklej klucz API…",
-    apiKeySave:        "Zapisz",
-    apiKeyClear:       "Usuń",
-    apiKeySaved:       "Zapisano klucz API w tej przeglądarce.",
-    apiKeyCleared:     "Usunięto klucz API.",
-    apiKeyError:       "Nie udało się zapisać klucza (przeglądarka blokuje localStorage).",
-
-    // Lekcja — „Jak zbudowana jest strona?” (przykład Rogalik)
-    lesson: {
-      title:      "Jak zbudowana jest strona?",
-      sub:        "Przykład: kawiarnia i piekarnia „Rogalik”. Ta sama strona w czterech etapach — dodawaj kolejne warstwy i zobacz, co każda z nich wnosi.",
-      filesTitle: "Zajrzyj do plików",
-      filesHint:  "Strona „Rogalik” składa się z trzech plików. Kliknij nazwę, aby zobaczyć zawartość każdego z nich.",
-      sizesIntro: "Rozmiar plików:",
-      sizesTotal: "razem",
-      err:        "Nie udało się wczytać plików przykładu. Uruchom aplikację przez adres http:// (a nie jako plik file://).",
-      stages: [
-        { id: "text", tab: "1 · Czysty tekst", name: "Czysty tekst",
-          desc: "Tak wygląda sama treść — wszystkie słowa strony, bez żadnej struktury i wyglądu. „Pod spodem” strona to najpierw zwykły tekst.",
-          adds: ["Wszystkie słowa, ceny i godziny", "Bez nagłówków, list i obrazów", "Bez kolorów i bez żadnych akcji"] },
-        { id: "html", tab: "2 · HTML", name: "+ HTML — struktura",
-          desc: "HTML nadaje treści znaczenie i porządek: co jest nagłówkiem, co akapitem, co listą, gdzie jest obraz, a gdzie przycisk. To „szkielet” strony.",
-          adds: ["Nagłówki: „Rogalik”, „Z naszej piekarni”…", "Lista oferty z cenami", "Logo (obraz) i przycisk", "Wygląd wciąż domyślny — bez własnych stylów"] },
-        { id: "css", tab: "3 · HTML + CSS", name: "+ CSS — wygląd",
-          desc: "CSS dodaje wygląd: kolory, czcionki, układ i odstępy. Treść się nie zmienia — zmienia się tylko to, jak wygląda.",
-          adds: ["Brązowy nagłówek, kremowe tło", "Ostylowany przycisk i lista cen", "Odstępy, obramowania, stopka", "To ta sama treść, co w kroku 2"] },
-        { id: "js", tab: "4 · HTML + CSS + JS", name: "+ JavaScript — interakcja",
-          desc: "JavaScript ożywia stronę — reaguje na kliknięcia i na czas. Teraz strona coś „robi”, a nie tylko wygląda.",
-          adds: ["Przycisk liczy zamówione rogaliki", "Status „otwarte / nieczynne” z aktualnej godziny", "Bez JS te elementy są nieruchome"] },
-      ],
-      files: [
-        { id: "html", name: "index.html", role: "HTML — szkielet i treść. Określa, co jest na stronie i w jakiej kolejności." },
-        { id: "css",  name: "styles.css", role: "CSS — wygląd. Mówi przeglądarce, jak ma wyglądać każdy element (kolory, czcionki, układ)." },
-        { id: "js",   name: "script.js",  role: "JavaScript — zachowanie. Dodaje akcje: reakcje na kliknięcia i wyliczenia w czasie." },
-      ],
-    },
-  };
-
-  // resourceType → bar colour (edulab tokens; resolve in-page via inline style)
-  const TYPE_COLOR = {
-    script:     "var(--marigold)",
-    font:       "var(--teal)",
-    image:      "var(--sky)",
-    stylesheet: "var(--coral)",
-    document:   "var(--ink)",
-    media:      "var(--play-grape)",
-    other:      "var(--ink-3)",
-    "third-party": "var(--ink-3)",
-  };
-
-  const TYPE_KEY = { // PSI resourceType → PL.types key
-    document: "document", stylesheet: "stylesheet", script: "script",
-    image: "image", font: "font", media: "media", other: "other", "third-party": "other",
-  };
-
-  /* ---- Static label wiring ---- */
-  function applyStaticStrings() {
-    document.title = PL.appName;
-    $("appName").textContent = PL.appName;
-    $("tagline").textContent = PL.tagline;
-    $("url").placeholder = PL.urlPlaceholder;
-    $("analyzeBtn").textContent = PL.analyze;
-    $("sampleBtn").textContent = PL.showExample;
-    $("modeRealBtn").textContent = PL.modeReal;
-    $("modeExampleBtn").textContent = PL.modeExample;
-    $("noteDecoupled").textContent = PL.noteDecoupled;
-    $("panelATitle").textContent = PL.weightTitle;
-    $("panelASub").textContent = PL.weightSub;
-    $("noteWeight").textContent = PL.noteWeight;
-    $("panelBTitle").textContent = PL.appearTitle;
-    $("layersHint").textContent = PL.layersHint;
-    $("lblCss").textContent = PL.layerCss;
-    $("lblJs").textContent = PL.layerJs;
-    $("lblImg").textContent = PL.layerImg;
-    $("lblFonts").textContent = PL.layerFonts;
-    $("noteRender").textContent = PL.noteRender;
-    $("apiKeyHint").textContent = PL.apiKeyHint;
-    $("apiKey").placeholder = PL.apiKeyPlaceholder;
-    $("apiKeySaveBtn").textContent = PL.apiKeySave;
-    $("apiKeyClearBtn").textContent = PL.apiKeyClear;
-    $("weightBody").innerHTML =
-      '<p class="state">' + PL.emptyWeight + '</p>';
-  }
-
-  function refreshApiKeyTitle() {
-    $("apiKeyTitle").textContent =
-      getApiKey() ? PL.apiKeyActive : PL.apiKeyTitle;
-  }
-
-  function initApiKey() {
-    const input = $("apiKey");
-    const status = $("apiKeyStatus");
-    input.value = getApiKey();
-    refreshApiKeyTitle();
-
-    $("apiKeySaveBtn").addEventListener("click", function () {
-      const v = input.value.trim();
-      try {
-        if (v) localStorage.setItem(PSI_KEY_LS, v); else localStorage.removeItem(PSI_KEY_LS);
-        status.textContent = v ? PL.apiKeySaved : PL.apiKeyCleared;
-      } catch (e) { status.textContent = PL.apiKeyError; }
-      refreshApiKeyTitle();
-    });
-
-    $("apiKeyClearBtn").addEventListener("click", function () {
-      input.value = "";
-      try { localStorage.removeItem(PSI_KEY_LS); } catch (e) {}
-      status.textContent = PL.apiKeyCleared;
-      refreshApiKeyTitle();
-    });
-  }
-
-  /* ---- Helpers ---- */
-  function kb(bytes) { return Math.round(bytes / 1024).toLocaleString("pl-PL") + " KB"; }
-  function intl(n) { return Number(n).toLocaleString("pl-PL"); }
-  function labelFor(resType) { return PL.types[TYPE_KEY[resType] || "other"] || PL.types.other; }
-
-  /* ============================================================
-     Panel A — Page weight (PSI) per spec §3
-     ============================================================ */
-  // ---- Optional PageSpeed API key (stored only in this browser) ----
-  const PSI_KEY_LS = "anatomia.psiKey";
-  function getApiKey() { try { return localStorage.getItem(PSI_KEY_LS) || ""; } catch (e) { return ""; } }
-
-  async function getWeight(targetUrl) {
-    const api = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
-    const key = getApiKey();
-    let url = api + "?url=" + encodeURIComponent(targetUrl) + "&strategy=mobile&locale=pl";
-    if (key) url += "&key=" + encodeURIComponent(key);
-    const res = await fetch(url);
-    if (!res.ok) {
-      if (res.status === 429) throw new Error("PSI_QUOTA");
-      if (res.status === 400 || res.status === 403) throw new Error("PSI_AUTH");
-      throw new Error("PSI_FAILED");
-    }
-    const json = await res.json();
-    const audit = json.lighthouseResult &&
-      json.lighthouseResult.audits &&
-      json.lighthouseResult.audits["resource-summary"];
-    if (!audit || !audit.details) throw new Error("PSI_FAILED");
-    // Lighthouse names the byte field `transferSize`; older/sample data use `size`.
-    const bytesOf = i => (i.transferSize != null ? i.transferSize : (i.size != null ? i.size : 0));
-    const items = audit.details.items;
-    const total = items.find(i => i.resourceType === "total");
-    const byType = items
-      .filter(i => i.resourceType !== "total" && i.requestCount > 0)
-      .map(i => ({ resourceType: i.resourceType, requestCount: i.requestCount, size: bytesOf(i) }))
-      .sort((a, b) => b.size - a.size);
-    return { requests: total.requestCount, bytes: bytesOf(total), byType };
-  }
-
-  function renderWeight(data) {
-    const maxSize = Math.max.apply(null, data.byType.map(i => i.size)) || 1;
-    const top = data.byType.slice(0, 2).map(i => labelFor(i.resourceType)).join(", ");
-
-    let bars = "";
-    let rows = "";
-    data.byType.forEach(i => {
-      const name = labelFor(i.resourceType);
-      const color = TYPE_COLOR[i.resourceType] || TYPE_COLOR.other;
-      const pct = Math.max(2, Math.round((i.size / maxSize) * 100));
-      bars +=
-        '<div class="bar-row">' +
-          '<span class="name">' + name + '</span>' +
-          '<span class="bar-track"><span class="bar-fill" style="width:' + pct + '%;background:' + color + '"></span></span>' +
-          '<span class="amt">' + kb(i.size) + '</span>' +
-        '</div>';
-      rows +=
-        '<tr><th scope="row">' + name + '</th>' +
-        '<td class="num">' + intl(i.requestCount) + '</td>' +
-        '<td class="num">' + kb(i.size) + '</td></tr>';
-    });
-
-    $("weightBody").innerHTML =
-      '<div class="stats">' +
-        '<div class="stat req"><div class="val">' + intl(data.requests) + '</div><div class="lbl">' + PL.requests + '</div></div>' +
-        '<div class="stat size"><div class="val">' + kb(data.bytes) + '</div><div class="lbl">' + PL.transferred + '</div></div>' +
-      '</div>' +
-      '<h3 class="breakdown-title">' + PL.byType + '</h3>' +
-      '<div class="bars" aria-hidden="true">' + bars + '</div>' +
-      '<div class="biggest"><strong>' + PL.biggest + ':</strong> ' + top + '</div>' +
-      '<table class="data-table">' +
-        '<caption>' + PL.tableCaption + '</caption>' +
-        '<thead><tr><th scope="col">' + PL.colType + '</th>' +
-        '<th scope="col" class="num">' + PL.colReq + '</th>' +
-        '<th scope="col" class="num">' + PL.colSize + '</th></tr></thead>' +
-        '<tbody>' + rows +
-        '<tr><th scope="row">' + PL.total + '</th>' +
-        '<td class="num">' + intl(data.requests) + '</td>' +
-        '<td class="num">' + kb(data.bytes) + '</td></tr>' +
-        '</tbody>' +
-      '</table>';
-  }
-
-  function showWeightState(html, isError) {
-    $("weightBody").innerHTML =
-      '<div class="state' + (isError ? ' err' : '') + '">' + html + '</div>';
-  }
-
-  async function loadWeight(targetUrl) {
-    showWeightState('<div class="spinner" role="status" aria-label="' + PL.loading + '"></div>' + PL.loading, false);
-    try {
-      const data = await getWeight(targetUrl);
-      renderWeight(data);
-    } catch (e) {
-      const code = e && e.message;
-      const msg = code === "PSI_QUOTA" ? PL.errQuota
-                : code === "PSI_AUTH"  ? PL.errAuth
-                : PL.errPsi;
-      showWeightState(msg, true);
-    }
-  }
-
-  // Hard-coded PSI-style numbers for the owned sample (offline-safe fallback, spec §8)
-  const SAMPLE_WEIGHT = {
-    requests: 53,
-    bytes: 1020688,
-    byType: [
-      { resourceType: "script",     requestCount: 13, size: 585116 },
-      { resourceType: "font",       requestCount: 7,  size: 170608 },
-      { resourceType: "image",      requestCount: 18, size: 149111 },
-      { resourceType: "stylesheet", requestCount: 3,  size: 68805  },
-      { resourceType: "document",   requestCount: 2,  size: 25169  },
-      { resourceType: "other",      requestCount: 10, size: 21879  },
-    ],
-  };
-
-  /* ============================================================
-     Panel B — Appearance (proxy fetch + srcdoc) per spec §4
-     ============================================================ */
-  // fetch with an abort timeout so a slow proxy fails over instead of hanging.
-  function fetchT(url, ms) {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), ms || 12000);
-    return fetch(url, { signal: ctl.signal }).finally(() => clearTimeout(t));
-  }
-
-  // Self-hosted Cloudflare Worker proxy (see worker/README.md). Paste your
-  // Worker URL here, e.g. "https://anatomia-proxy.NAME.workers.dev".
-  // Leave "" to use only the public fallback proxies below.
-  const PROXY_WORKER_URL = "https://anatomia-proxy.andrzey-jankowski.workers.dev";
-  function proxyWorkerUrl() {
-    try { return localStorage.getItem("anatomia.proxyWorker") || PROXY_WORKER_URL; }
-    catch (e) { return PROXY_WORKER_URL; }
-  }
-
-  // Public CORS proxies, tried in order — gives transient-failure resilience.
-  const PROXIES = [
-    async u => { const r = await fetchT("https://api.allorigins.win/raw?url=" + encodeURIComponent(u)); if (!r.ok) throw 0; return r.text(); },
-    async u => { const r = await fetchT("https://api.allorigins.win/get?url=" + encodeURIComponent(u)); if (!r.ok) throw 0; const j = await r.json(); if (!j || !j.contents) throw 0; return j.contents; },
-  ];
-  async function fetchViaProxy(u) {
-    const chain = PROXIES.slice();
-    const wk = proxyWorkerUrl();
-    if (wk) {
-      // Your Worker is tried FIRST; public proxies remain as fallback.
-      chain.unshift(async x => {
-        const r = await fetchT(wk.replace(/\/+$/, "") + "/?url=" + encodeURIComponent(x));
-        if (!r.ok) throw 0; return r.text();
-      });
-    }
-    let lastErr;
-    for (const p of chain) {
-      try { const html = await p(u); if (html && html.length > 0) return html; }
-      catch (e) { lastErr = e; }
-    }
-    throw lastErr || new Error("PROXY_FAILED");
-  }
-  let rawHtmlCache = null;   // cached raw HTML so toggling never re-fetches
-  let originUrlCache = null;
-
-  function currentLayers() {
-    return {
-      css:   $("tCss").checked,
-      js:    $("tJs").checked,
-      img:   $("tImg").checked,
-      fonts: $("tFonts").checked,
-    };
-  }
-
-  function renderAppearance(rawHtml, originalUrl, layers, iframe) {
-    const doc = new DOMParser().parseFromString(rawHtml, "text/html");
-    const base = doc.createElement("base");
-    base.setAttribute("href", originalUrl);
-    doc.head.prepend(base);
-
-    if (!layers.css) doc.querySelectorAll('link[rel="stylesheet"], style').forEach(n => n.remove());
-    if (!layers.js)  doc.querySelectorAll('script').forEach(n => n.remove());
-    if (!layers.img) doc.querySelectorAll('img, picture, svg[role="img"]').forEach(n => n.remove());
-    if (!layers.fonts) {
-      // remove web-font <link> (Google Fonts etc.), preload fonts, and @font-face rules
-      doc.querySelectorAll('link[rel="preload"][as="font"]').forEach(n => n.remove());
-      doc.querySelectorAll('link[rel="stylesheet"]').forEach(n => {
-        const href = (n.getAttribute("href") || "").toLowerCase();
-        if (href.includes("font") || href.includes("typekit")) n.remove();
-      });
-      doc.querySelectorAll('style').forEach(s => {
-        if (/@font-face/i.test(s.textContent)) s.textContent = s.textContent.replace(/@font-face\s*\{[^}]*\}/gi, "");
-      });
-    }
-
-    iframe.sandbox = layers.js ? "allow-scripts" : "";
-    iframe.srcdoc = "<!doctype html>" + doc.documentElement.outerHTML;
-
-    // SPA-without-JS lesson: detect near-empty body text
-    const bodyText = (doc.body && doc.body.textContent || "").replace(/\s+/g, " ").trim();
-    const spa = $("spaWarning");
-    if (!layers.js && bodyText.length < 40) {
-      spa.textContent = PL.noteSpaNoJs;
-      spa.hidden = false;
-    } else {
-      spa.hidden = true;
-    }
-  }
-
-  function reRender() {
-    if (rawHtmlCache == null) return;
-    renderAppearance(rawHtmlCache, originUrlCache, currentLayers(), $("preview"));
-  }
-
-  function previewMessage(msg) {
-    $("preview").srcdoc =
-      '<!doctype html><meta charset="utf-8"><body style="margin:0;font-family:system-ui,sans-serif;' +
-      'color:#5B554D;display:flex;align-items:center;justify-content:center;height:100vh;' +
-      'text-align:center;padding:24px;box-sizing:border-box">' + msg + '</body>';
-  }
-
-  async function loadAppearance(targetUrl, sameOrigin) {
-    const iframe = $("preview");
-    iframe.sandbox = "allow-scripts";
-    previewMessage(PL.loadingPreview);
-    $("spaWarning").hidden = true;
-    try {
-      if (sameOrigin) {
-        const res = await fetch(targetUrl);
-        if (!res.ok) throw new Error("FETCH_FAILED");
-        rawHtmlCache = await res.text();
-        originUrlCache = new URL(targetUrl, location.href).href;
-      } else {
-        rawHtmlCache = await fetchViaProxy(targetUrl);
-        originUrlCache = targetUrl;
+    // ─── Translations ───
+    const T = {
+      pl: {
+        docTitle: "Anatomia strony WWW – jak działa strona internetowa",
+        metaDesc: "Interaktywne wyjaśnienie, jak pliki wędrują z serwera i stają się stroną w Twojej przeglądarce.",
+        eyebrow: "Strona rozłożona na części",
+        title: "Każda strona to przesyłka.",
+        lead: "Strona WWW to nie jedna rzecz. To paczka plików przechowywanych na serwerze, wysyłanych przez internet i składanych przez przeglądarkę w ułamku sekundy.",
+        noteLabel: "Twoja kolej:",
+        noteBody: "wyłącz pliki na serwerze, a potem wyślij żądanie, aby zobaczyć, co wnosi każdy z nich.",
+        btnRequest: "Wyślij żądanie przeglądarki",
+        btnRequestAria: "Wyślij żądanie przeglądarki (skrót: R)",
+        kickerServer: "01 · Źródło",
+        serverTitle: "Serwer WWW",
+        networkSub: "transfer HTTP",
+        kickerClient: "03 · Klient",
+        browserTitle: "Twoja przeglądarka",
+        roleHtml: "Struktura · 4 KB",
+        roleCss: "Wygląd · 7 KB",
+        roleJs: "Zachowanie · 5 KB",
+        roleImage: "Media · 11 KB",
+        presetAll: "Wszystkie",
+        presetHtml: "Tylko HTML",
+        presetClear: "Wyczyść",
+        pillHtml: "HTML sparsowany",
+        pillCss: "CSS zastosowany",
+        pillJs: "JS wykonany",
+        pillImage: "Obraz zdekodowany",
+        step1t: "Przeglądarka pyta",
+        step1p: "Po wpisaniu adresu URL przeglądarka najpierw znajduje adres IP serwera (DNS), a potem wysyła do niego żądanie HTTP.",
+        step2t: "Serwer odpowiada",
+        step2p: "Odpowiedź HTML wskazuje przeglądarce style, skrypty, obrazy, fonty i inne powiązane zasoby.",
+        step3t: "Przeglądarka buduje",
+        step3p: "Parsuje HTML, a każdy powiązany zasób pobiera osobnym żądaniem – często równolegle – po czym renderuje stronę i aktualizuje ją przyrostowo.",
+        inspectKicker: "Zajrzyj do plików",
+        inspectTitle: "Małe pliki. Różne zadania.",
+        inspectCopy: "Przeglądarka czyta każdy format inaczej. Wybierz plik, aby zobaczyć, jakie instrukcje niesie.",
+        statusReady: "Serwer gotowy",
+        statusReadyDetail: "pliki czekają na serwerze · wyślij żądanie przeglądarki",
+        statusAssembled: "Strona złożona",
+        statusAssembledDetail: "{files} · {kb} KB przesłane · strona wyrenderowana",
+        statusNoDoc: "Brak dokumentu",
+        statusNoDocDetail: "404 Not Found · nie odkryto powiązanych zasobów",
+        statusChanged: "Zmieniono wybór na serwerze",
+        statusChangedDetail: "wyślij nowe żądanie, aby dostarczyć te pliki",
+        statusRequesting: "Żądanie index.html",
+        statusRequestingDetail: "DNS: sunroom.studio → 198.51.100.7 · GET / HTTP/2",
+        statusTransferring: "Przesyłanie: {file}",
+        statusFirstOk: "200 OK · parsowanie HTML i wykrywanie powiązanych zasobów",
+        statusLinkedOk: "200 OK · powiązany zasób {i} z {total}",
+        statusNotFound: "Nie znaleziono index.html",
+        statusNotFoundDetail: "404 Not Found · nie wykryto powiązanych zasobów",
+        paintIdle: "czeka na pierwsze żądanie",
+        paintLinked: "HTML sparsowany → {res} → render",
+        paintNoLinked: "HTML sparsowany → render",
+        paintWaitingHtml: "czekam na index.html",
+        fileForms: ["1 plik", "{n} pliki", "{n} plików"],
+        resForms: ["1 powiązany zasób", "{n} powiązane zasoby", "{n} powiązanych zasobów"],
+        previewIdleTitle: "Pusta karta",
+        previewIdleBody: "Przeglądarka jeszcze o nic nie poprosiła. Wyślij żądanie, aby pobrać stronę z serwera.",
+        preview404Title: "Brak dokumentu HTML",
+        preview404Body: "Bez index.html przeglądarka nie ma struktury do sparsowania i nie ma czego złożyć.",
+        previewJsNote: "app.js jest wyłączony – przyciski nie mogą reagować"
+      },
+      en: {
+        docTitle: "Web Anatomy – how websites work",
+        metaDesc: "An interactive explanation of how web files travel from a server and become a website in your browser.",
+        eyebrow: "A website, taken apart",
+        title: "Every website is a delivery.",
+        lead: "A web page is not one thing. It is a bundle of files stored on a server, sent across the internet, then assembled by your browser in a fraction of a second.",
+        noteLabel: "Your turn:",
+        noteBody: "switch files off at the server, then send a request to see exactly what each one contributes.",
+        btnRequest: "Send browser request",
+        btnRequestAria: "Send browser request (shortcut: R)",
+        kickerServer: "01 · Origin",
+        serverTitle: "Web server",
+        networkSub: "HTTP transfer",
+        kickerClient: "03 · Client",
+        browserTitle: "Your browser",
+        roleHtml: "Structure · 4 KB",
+        roleCss: "Appearance · 7 KB",
+        roleJs: "Behaviour · 5 KB",
+        roleImage: "Media · 11 KB",
+        presetAll: "Select all",
+        presetHtml: "HTML only",
+        presetClear: "Clear",
+        pillHtml: "HTML parsed",
+        pillCss: "CSS applied",
+        pillJs: "JS executed",
+        pillImage: "Image decoded",
+        step1t: "The browser asks",
+        step1p: "Entering a URL first resolves the server's IP address (DNS), then sends an HTTP request to the server that owns the website files.",
+        step2t: "The server responds",
+        step2p: "The HTML response points the browser toward styles, scripts, images, fonts, and other linked resources.",
+        step3t: "The browser builds",
+        step3p: "It parses HTML and fetches every linked resource with its own request, often in parallel, then renders and updates the page incrementally.",
+        inspectKicker: "Look inside the files",
+        inspectTitle: "Small files. Different jobs.",
+        inspectCopy: "The browser reads each format differently. Select a file to see the instruction it carries.",
+        statusReady: "Server ready",
+        statusReadyDetail: "files are waiting on the server · send a browser request",
+        statusAssembled: "Website assembled",
+        statusAssembledDetail: "{files} · {kb} KB transferred · page rendered",
+        statusNoDoc: "No document received",
+        statusNoDocDetail: "404 Not Found · no linked resources discovered",
+        statusChanged: "Server selection changed",
+        statusChangedDetail: "send a new request to deliver these files",
+        statusRequesting: "Requesting index.html",
+        statusRequestingDetail: "DNS: sunroom.studio → 198.51.100.7 · GET / HTTP/2",
+        statusTransferring: "Transferring {file}",
+        statusFirstOk: "200 OK · parsing HTML and discovering linked resources",
+        statusLinkedOk: "200 OK · linked resource {i} of {total}",
+        statusNotFound: "index.html not found",
+        statusNotFoundDetail: "404 Not Found · linked resources were not discovered",
+        paintIdle: "waiting for the first request",
+        paintLinked: "HTML parsed → {res} → render",
+        paintNoLinked: "HTML parsed → render",
+        paintWaitingHtml: "Waiting for index.html",
+        fileForms: ["1 file", "{n} files", "{n} files"],
+        resForms: ["1 linked resource", "{n} linked resources", "{n} linked resources"],
+        previewIdleTitle: "Blank tab",
+        previewIdleBody: "The browser has not asked for anything yet. Send a request to fetch the website from the server.",
+        preview404Title: "No HTML document",
+        preview404Body: "Without index.html, the browser has no structure to parse and nothing to assemble.",
+        previewJsNote: "app.js is off – buttons cannot respond"
       }
-      reRender();
-    } catch (e) {
-      rawHtmlCache = null;
-      previewMessage(PL.errFetch);
-    }
-  }
+    };
 
-  /* ============================================================
-     Wiring
-     ============================================================ */
-  function analyze(targetUrl) {
-    loadWeight(targetUrl);
-    loadAppearance(targetUrl, false);
-  }
-
-  function loadSample() {
-    // Same-origin owned sample: hard-coded weight + direct (no-proxy) render
-    renderWeight(SAMPLE_WEIGHT);
-    $("url").value = "";
-    loadAppearance("sample/index.html", true);
-  }
-
-  // Accept bare hosts ("gov.pl", "www.wp.pl") — add the protocol in the background.
-  function normalizeUrl(raw) {
-    let v = (raw || "").trim();
-    if (!v) return "";
-    if (!/^https?:\/\//i.test(v)) v = "https://" + v.replace(/^\/+/, "");
-    return v;
-  }
-
-  $("form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const v = normalizeUrl($("url").value);
-    if (v) analyze(v);
-  });
-  $("sampleBtn").addEventListener("click", loadSample);
-  ["tCss", "tJs", "tImg", "tFonts"].forEach(id =>
-    $(id).addEventListener("change", reRender)
-  );
-
-  /* ============================================================
-     Lekcja — „Jak zbudowana jest strona?" (przykład Rogalik, 3 pliki)
-     ============================================================ */
-  const ROGALIK_BASE = "sample/rogalik/";
-  let rogalikFiles = null;   // { html, css, js }
-
-  function buildStageDoc(stage, files) {
-    const doc = new DOMParser().parseFromString(files.html, "text/html");
-    // strip the external link/script — we inline CSS/JS per stage so srcdoc is self-contained
-    doc.querySelectorAll('link[rel="stylesheet"], script').forEach(n => n.remove());
-
-    if (stage === "text") {
-      const raw = (doc.body ? doc.body.textContent : "") || "";
-      const text = raw.split("\n").map(l => l.trim()).filter(l => l.length).join("\n");
-      const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      return '<!doctype html><meta charset="utf-8"><body style="margin:0;padding:18px;' +
-        'font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.7;' +
-        'white-space:pre-wrap;color:#222;background:#fff">' + esc + '</body>';
-    }
-    if (stage === "css" || stage === "js") {
-      const style = doc.createElement("style"); style.textContent = files.css;
-      doc.head.appendChild(style);
-    }
-    if (stage === "js") {
-      const sc = doc.createElement("script"); sc.textContent = files.js;
-      doc.body.appendChild(sc);
-    }
-    return "<!doctype html>" + doc.documentElement.outerHTML;
-  }
-
-  function renderStage(stage) {
-    if (!rogalikFiles) return;
-    const frame = $("lessonFrame");
-    frame.sandbox = (stage === "js") ? "allow-scripts" : "";
-    frame.srcdoc = buildStageDoc(stage, rogalikFiles);
-    const s = PL.lesson.stages.find(x => x.id === stage);
-    $("stageName").textContent = s.name;
-    $("stageDesc").textContent = s.desc;
-    const adds = $("stageAdds");
-    adds.innerHTML = "";
-    s.adds.forEach(a => { const li = document.createElement("li"); li.textContent = a; adds.appendChild(li); });
-    document.querySelectorAll("#stages .stage-btn").forEach(b =>
-      b.setAttribute("aria-selected", String(b.dataset.stage === stage)));
-  }
-
-  function showFile(fileId) {
-    if (!rogalikFiles) return;
-    const f = PL.lesson.files.find(x => x.id === fileId);
-    const src = fileId === "html" ? rogalikFiles.html : fileId === "css" ? rogalikFiles.css : rogalikFiles.js;
-    $("fileRole").textContent = f.role;
-    $("fileCode").textContent = src;   // textContent escapes for us
-    document.querySelectorAll("#fileTabs .file-tab").forEach(b =>
-      b.setAttribute("aria-selected", String(b.dataset.file === fileId)));
-  }
-
-  function buildTabs(containerId, items, labelKey, onClick) {
-    const el = $(containerId);
-    el.innerHTML = "";
-    items.forEach(it => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = containerId === "stages" ? "stage-btn" : "file-tab";
-      b.dataset[containerId === "stages" ? "stage" : "file"] = it.id;
-      b.setAttribute("role", "tab");
-      b.setAttribute("aria-selected", "false");
-      b.textContent = it[labelKey];
-      b.addEventListener("click", () => onClick(it.id));
-      el.appendChild(b);
-    });
-  }
-
-  function fmtFileSize(bytes) {
-    if (bytes < 1024) return bytes + " B";
-    return (bytes / 1024).toFixed(1).replace(".", ",") + " KB";
-  }
-  function showFileSizes(html, css, js) {
-    const enc = new TextEncoder();
-    const h = enc.encode(html).length, c = enc.encode(css).length, j = enc.encode(js).length;
-    $("filesSizes").textContent =
-      PL.lesson.sizesIntro +
-      " index.html " + fmtFileSize(h) +
-      " · styles.css " + fmtFileSize(c) +
-      " · script.js " + fmtFileSize(j) +
-      " · " + PL.lesson.sizesTotal + " " + fmtFileSize(h + c + j);
-  }
-
-  async function initLesson() {
-    $("lessonTitle").textContent = PL.lesson.title;
-    $("lessonSub").textContent = PL.lesson.sub;
-    $("filesTitle").textContent = PL.lesson.filesTitle;
-    $("filesHint").textContent = PL.lesson.filesHint;
-    buildTabs("stages", PL.lesson.stages, "tab", renderStage);
-    buildTabs("fileTabs", PL.lesson.files, "name", showFile);
-
+    const LANG_KEY = "webAnatomyLang";
+    let lang = "pl";
     try {
-      const [html, css, js] = await Promise.all([
-        fetch(ROGALIK_BASE + "index.html").then(r => r.text()),
-        fetch(ROGALIK_BASE + "styles.css").then(r => r.text()),
-        fetch(ROGALIK_BASE + "script.js").then(r => r.text()),
-      ]);
-      rogalikFiles = { html, css, js };
-      showFileSizes(html, css, js);
-      renderStage("text");
-      showFile("html");
-    } catch (e) {
-      $("lessonFrame").srcdoc =
-        '<!doctype html><meta charset="utf-8"><body style="font-family:sans-serif;color:#5B554D;padding:20px">' +
-        PL.lesson.err + '</body>';
+      const saved = localStorage.getItem(LANG_KEY);
+      if (saved && T[saved]) lang = saved;
+    } catch (e) { /* localStorage unavailable */ }
+
+    function t(key) { return T[lang][key]; }
+    function fmt(str, vars) { return str.replace(/\{(\w+)\}/g, (m, k) => vars[k]); }
+
+    function plural(n, forms) {
+      const form = n === 1 ? forms[0]
+        : (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) ? forms[1]
+        : forms[2];
+      return fmt(form, { n });
     }
-  }
 
-  // Mode switch — show EITHER the analyzer OR the example, never both.
-  function setMode(mode) {
-    $("realMode").hidden = (mode !== "real");
-    $("exampleMode").hidden = (mode !== "example");
-    document.querySelectorAll("#modeSwitch .mode-btn").forEach(b =>
-      b.setAttribute("aria-selected", String(b.dataset.mode === mode)));
-  }
-  $("modeRealBtn").addEventListener("click", () => setMode("real"));
-  $("modeExampleBtn").addEventListener("click", () => setMode("example"));
+    // ─── State ───
+    const fileSizes = { html: 4, css: 7, js: 5, image: 11 };
+    const fileNames = { html: "index.html", css: "styles.css", js: "app.js", image: "hero.svg" };
+    const files = ["html", "css", "js", "image"];
+    let hasRequested = false;
+    let deliveredFiles = [];
+    let lastRequestedFiles = [];
+    let requestTimers = [];
 
-  applyStaticStrings();
-  initApiKey();
-  initLesson();
-  setMode("real");
+    // ─── DOM refs ───
+    const inputs = Object.fromEntries(files.map(file => [file, document.querySelector(`input[value="${file}"]`)]));
+    const status = document.getElementById("status");
+    const statusTitle = document.getElementById("statusTitle");
+    const statusDetail = document.getElementById("statusDetail");
+    const paintState = document.getElementById("paintState");
+    const preview = document.getElementById("preview");
+    const addressBar = document.getElementById("addressBar");
+    const requestButton = document.getElementById("requestButton");
+    const langButtons = [...document.querySelectorAll(".lang-btn")];
+
+    // ─── Simulated website content (teaching subject — deliberately not edulab-styled) ───
+    const imageSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5bf55"/><stop offset="1" stop-color="#ef7656"/></linearGradient></defs>
+      <rect width="900" height="520" rx="26" fill="#e7eddf"/><circle cx="720" cy="105" r="64" fill="url(#g)"/>
+      <path d="M0 420 205 230l125 122 110-106 260 274H0Z" fill="#7fa37a"/><path d="M160 520 510 190l390 330Z" fill="#315b52"/>
+      <path d="m420 275 90-85 99 104-66-24-33 38-31-38Z" fill="#fff9e9" opacity=".9"/>
+      <g fill="#193831"><rect x="92" y="290" width="15" height="115" rx="7"/><circle cx="100" cy="272" r="42"/></g>
+    </svg>`;
+    const imageUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(imageSvg)}`;
+
+    const previewCss = `
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f7f2e8; color: #193831; font-family: Arial, sans-serif; }
+      header { display: flex; justify-content: space-between; align-items: center; padding: 22px 30px; }
+      .logo { font-weight: 800; font-size: 18px; letter-spacing: -.5px; }
+      nav { display: flex; gap: 22px; color: #53645f; font-size: 12px; }
+      main { padding: 14px 30px 28px; }
+      .hero-image { width: 100%; height: 205px; display: block; object-fit: cover; border-radius: 18px; box-shadow: 0 12px 25px rgba(25,56,49,.13); }
+      .image-placeholder { height: 205px; display: grid; place-items: center; border: 1px dashed #b7b2a8; border-radius: 18px; color: #8a8982; font: 12px monospace; background: #efebe2; }
+      .copy { display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: end; padding: 23px 3px 0; }
+      .eyebrow { margin: 0 0 7px; color: #be603d; font-size: 10px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+      h1 { margin: 0; max-width: 390px; font-size: clamp(35px, 6vw, 57px); line-height: .95; letter-spacing: -3px; }
+      .side { color: #65726e; font-size: 12px; line-height: 1.55; }
+      button { border: 0; border-radius: 999px; padding: 10px 15px; color: white; background: #193831; font-weight: 700; cursor: pointer; }
+      button:disabled { opacity: .5; cursor: default; }
+      .counter { display: inline-block; min-width: 22px; margin-left: 6px; padding: 2px 7px; border-radius: 99px; color: #193831; background: #f5bf55; }
+      .js-note { margin: 8px 0 0; color: #888; font: 10px monospace; }
+      body.night { background: #152521; color: #f7f2e8; }
+      body.night nav, body.night .side { color: #b9c7c2; }
+      body.night button { color: #152521; background: #f5bf55; }
+      @media (max-width: 520px) { header { padding: 17px 18px; } nav { gap: 10px; } main { padding: 8px 18px 22px; } .hero-image,.image-placeholder{height:230px}.copy{grid-template-columns:1fr;gap:12px}h1{font-size:43px}.side{max-width:320px} }
+    `;
+
+    // ─── Helpers ───
+    function selectedFiles() {
+      return files.filter(file => inputs[file].checked);
+    }
+
+    function sameFiles(first, second) {
+      return files.every(file => first.includes(file) === second.includes(file));
+    }
+
+    function buildIdle() {
+      return `<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:30px;box-sizing:border-box;text-align:center;background:#fff;color:#8b8f8c;font-family:system-ui,sans-serif"><div><div style="width:44px;height:44px;margin:0 auto 14px;border-radius:50%;border:2px dashed #d3d4d0"></div><h2 style="margin:0 0 7px;font-size:16px;color:#4c534f">${t("previewIdleTitle")}</h2><p style="max-width:300px;margin:0;font-size:13px;line-height:1.6">${t("previewIdleBody")}</p></div></body></html>`;
+    }
+
+    function buildPreview(active) {
+      const has = file => active.includes(file);
+      if (!has("html")) {
+        return `<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:30px;box-sizing:border-box;text-align:center;background:#fff;color:#717672;font-family:system-ui,sans-serif"><div><div style="font:700 54px/1 monospace;color:#d9dad7">404</div><h2 style="margin:12px 0 7px;color:#28332f">${t("preview404Title")}</h2><p style="max-width:300px;margin:0;font-size:13px;line-height:1.6">${t("preview404Body")}</p></div></body></html>`;
+      }
+
+      const image = has("image")
+        ? `<img class="hero-image" src="${imageUri}" alt="Sunset over layered green mountains">`
+        : `<div class="image-placeholder">hero.svg was not requested</div>`;
+      const script = has("js") ? `<script>
+        let count = 0;
+        const button = document.getElementById('book');
+        const countNode = document.getElementById('count');
+        button.addEventListener('click', () => { count += 1; countNode.textContent = count; });
+        document.getElementById('theme').addEventListener('click', () => document.body.classList.toggle('night'));
+      <\/script>` : "";
+
+      return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">${has("css") ? `<style>${previewCss}</style>` : ""}</head>
+        <body><header><span class="logo">sunroom.</span><nav><span>Cabins</span><span>Journal</span><button id="theme" ${has("js") ? "" : "disabled"}>Theme</button></nav></header>
+        <main>${image}<div class="copy"><div><p class="eyebrow">Stay somewhere slower</p><h1>Room to breathe.</h1></div><div class="side"><p>Quiet cabins, warm light, and a whole lot of sky. Choose your weekend away.</p><button id="book" ${has("js") ? "" : "disabled"}>Save a cabin <span class="counter" id="count">0</span></button>${has("js") ? "" : `<p class="js-note">${t("previewJsNote")}</p>`}</div></div></main>${script}</body></html>`;
+    }
+
+    // ─── Render ───
+    function showBrowserStatus(active) {
+      const hasHtml = active.includes("html");
+      const linkedCount = Math.max(0, active.length - 1);
+      const total = active.reduce((sum, file) => sum + fileSizes[file], 0);
+
+      statusTitle.textContent = hasHtml ? t("statusAssembled") : t("statusNoDoc");
+      statusDetail.textContent = hasHtml
+        ? fmt(t("statusAssembledDetail"), { files: plural(active.length, t("fileForms")), kb: total })
+        : t("statusNoDocDetail");
+      paintState.textContent = hasHtml
+        ? linkedCount
+          ? fmt(t("paintLinked"), { res: plural(linkedCount, t("resForms")) })
+          : t("paintNoLinked")
+        : t("paintWaitingHtml");
+    }
+
+    function renderBrowser(active) {
+      deliveredFiles = [...active];
+      files.forEach(file => {
+        const on = active.includes(file);
+        document.querySelector(`.resource-pill[data-file="${file}"]`).classList.toggle("is-off", !on);
+      });
+      preview.sandbox = active.includes("js") ? "allow-scripts" : "";
+      preview.srcdoc = buildPreview(active);
+      addressBar.textContent = "https://sunroom.studio";
+      showBrowserStatus(active);
+    }
+
+    function renderIdle() {
+      files.forEach(file => {
+        document.querySelector(`.resource-pill[data-file="${file}"]`).classList.add("is-off");
+      });
+      preview.sandbox = "";
+      preview.srcdoc = buildIdle();
+      addressBar.textContent = "about:blank";
+      statusTitle.textContent = t("statusReady");
+      statusDetail.textContent = t("statusReadyDetail");
+      paintState.textContent = t("paintIdle");
+    }
+
+    function updateServerUI() {
+      const pending = selectedFiles();
+      files.forEach(file => {
+        document.querySelector(`.file-toggle[data-file="${file}"]`).classList.toggle("is-off", !pending.includes(file));
+      });
+
+      if (!hasRequested) {
+        statusTitle.textContent = t("statusReady");
+        statusDetail.textContent = t("statusReadyDetail");
+        return;
+      }
+
+      if (sameFiles(pending, lastRequestedFiles)) {
+        showBrowserStatus(deliveredFiles);
+      } else {
+        statusTitle.textContent = t("statusChanged");
+        statusDetail.textContent = t("statusChangedDetail");
+      }
+    }
+
+    function clearTimers() {
+      requestTimers.forEach(clearTimeout);
+      requestTimers = [];
+      document.querySelectorAll(".packet").forEach(packet => packet.classList.remove("fly"));
+    }
+
+    function sendRequest() {
+      clearTimers();
+      hasRequested = true;
+      const requested = selectedFiles();
+      const hasHtml = requested.includes("html");
+      const delivered = hasHtml ? [...requested] : [];
+      const transfers = hasHtml ? ["html", ...requested.filter(file => file !== "html")] : [];
+      status.classList.add("loading");
+      statusTitle.textContent = t("statusRequesting");
+      statusDetail.textContent = t("statusRequestingDetail");
+      preview.style.opacity = ".55";
+
+      transfers.forEach((file, index) => {
+        const delay = index === 0 ? 260 : 700 + (index - 1) * 100;
+        const timer = setTimeout(() => {
+          const packet = document.querySelector(`.packet[data-file="${file}"]`);
+          packet.classList.remove("fly");
+          void packet.offsetWidth;
+          packet.classList.add("fly");
+          statusTitle.textContent = fmt(t("statusTransferring"), { file: fileNames[file] });
+          statusDetail.textContent = index === 0
+            ? t("statusFirstOk")
+            : fmt(t("statusLinkedOk"), { i: index, total: transfers.length - 1 });
+        }, delay);
+        requestTimers.push(timer);
+      });
+
+      if (!hasHtml) {
+        const missingDocument = setTimeout(() => {
+          statusTitle.textContent = t("statusNotFound");
+          statusDetail.textContent = t("statusNotFoundDetail");
+        }, 450);
+        requestTimers.push(missingDocument);
+      }
+
+      const finish = setTimeout(() => {
+        lastRequestedFiles = [...requested];
+        renderBrowser(delivered);
+        updateServerUI();
+        status.classList.remove("loading");
+        preview.style.opacity = "1";
+      }, hasHtml ? Math.max(1600, 2050 + (transfers.length - 2) * 100) : 900);
+      requestTimers.push(finish);
+    }
+
+    // ─── Language ───
+    function applyLang(next) {
+      lang = next;
+      try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
+      document.documentElement.lang = lang;
+      document.title = t("docTitle");
+      document.querySelector('meta[name="description"]').setAttribute("content", t("metaDesc"));
+      document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+      requestButton.setAttribute("aria-label", t("btnRequestAria"));
+      langButtons.forEach(btn => btn.setAttribute("aria-pressed", String(btn.dataset.lang === lang)));
+
+      if (!hasRequested) {
+        renderIdle();
+      } else {
+        if (!deliveredFiles.includes("html") || !deliveredFiles.includes("js")) {
+          preview.srcdoc = buildPreview(deliveredFiles);
+        }
+        updateServerUI();
+      }
+    }
+
+    // ─── Source inspector ───
+    const sourceCode = {
+      html: `<!doctype html>\n<html>\n  <head>\n    <link rel="stylesheet" href="styles.css">\n  </head>\n  <body>\n    <h1>Room to breathe.</h1>\n    <img src="hero.svg" alt="Mountain sunset">\n    <button id="book">\n      Save a cabin <span id="count">0</span>\n    </button>\n    <script src="app.js"><\/script>\n  </body>\n</html>`,
+      css: `body {\n  background: #f7f2e8;\n  color: #193831;\n  font-family: Arial, sans-serif;\n}\n\nh1 {\n  font-size: 4rem;\n  letter-spacing: -0.06em;\n}\n\n.hero-image {\n  width: 100%;\n  border-radius: 18px;\n}`,
+      js: `let saved = 0;\nconst button = document.querySelector('#book');\nconst count = document.querySelector('#count');\n\nbutton.addEventListener('click', () => {\n  saved += 1;\n  count.textContent = saved;\n});`,
+      image: `<svg viewBox="0 0 900 520">\n  <circle class="sun" cx="720" cy="105" r="64" />\n  <path class="hill" d="M0 420 205 230l125 122 110-106 260 274H0Z" />\n  <path class="mountain" d="m160 520 350-330 390 330Z" />\n</svg>`
+    };
+
+    const codeContent = document.getElementById("codeContent");
+    const sourcePanel = document.getElementById("source-panel");
+    const codeTabs = [...document.querySelectorAll(".code-tab")];
+
+    function showCode(file) {
+      codeContent.textContent = sourceCode[file];
+      codeTabs.forEach(tab => {
+        const active = tab.dataset.file === file;
+        tab.setAttribute("aria-selected", String(active));
+        tab.tabIndex = active ? 0 : -1;
+        if (active) sourcePanel.setAttribute("aria-labelledby", tab.id);
+      });
+    }
+
+    // ─── Listeners ───
+    document.getElementById("serverRack").addEventListener("change", updateServerUI);
+    requestButton.addEventListener("click", sendRequest);
+
+    function setPreset(active) {
+      files.forEach(file => { inputs[file].checked = active.includes(file); });
+      updateServerUI();
+    }
+
+    document.getElementById("allOn").addEventListener("click", () => setPreset(files));
+    document.getElementById("htmlOnly").addEventListener("click", () => setPreset(["html"]));
+    document.getElementById("allOff").addEventListener("click", () => setPreset([]));
+
+    langButtons.forEach(btn => btn.addEventListener("click", () => applyLang(btn.dataset.lang)));
+
+    document.addEventListener("keydown", event => {
+      if (event.key.toLowerCase() !== "r" || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.target.matches("input:not([type=checkbox]), textarea") || event.target.isContentEditable) return;
+      event.preventDefault();
+      sendRequest();
+    });
+
+    codeTabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => showCode(tab.dataset.file));
+      tab.addEventListener("keydown", event => {
+        let nextIndex;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % codeTabs.length;
+        if (event.key === "ArrowLeft") nextIndex = (index - 1 + codeTabs.length) % codeTabs.length;
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = codeTabs.length - 1;
+        if (nextIndex === undefined) return;
+        event.preventDefault();
+        const nextTab = codeTabs[nextIndex];
+        showCode(nextTab.dataset.file);
+        nextTab.focus();
+      });
+    });
+
+    // ─── Init ───
+    showCode("html");
+    applyLang(lang);
   </script>
 </body>
 </html>
