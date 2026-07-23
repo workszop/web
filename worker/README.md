@@ -1,68 +1,38 @@
-# Worker proxy — „Anatomia strony WWW"
+# Legacy Worker proxy
 
-A tiny Cloudflare Worker that fetches an arbitrary public page **server-side** and
-returns its HTML with CORS headers, so the app's **Panel B (Wygląd strony)** can
-re-render any site reliably — including ones the free public proxies choke on
-(Wikipedia, redirecting domains like `wikipedia.com`, etc.).
+> Archived component: the current Web Anatomy experience is self-contained in
+> `../index.html` and does not call this Worker. Do not deploy it for the current
+> app.
 
-It's free on Cloudflare's plan (100k requests/day) and only touches Panel B.
-Panel A (Waga) still uses the PageSpeed Insights API + your API key — unrelated.
+This directory remains as a reference for the previous real-site analyzer. That
+version fetched a public HTML document through Cloudflare so a browser could
+read the response across origins.
 
----
+## Security model
 
-## Deploy — option A: Cloudflare dashboard (no tooling)
+The Worker now rejects requests whose `Origin` is not listed in
+`ALLOWED_ORIGINS` (with localhost allowed for development), validates every
+redirect target, rejects private and loopback literal addresses, accepts only
+HTML responses, and streams upstream bodies instead of buffering them.
 
-1. Sign in at <https://dash.cloudflare.com> → **Workers & Pages** → **Create** → **Create Worker**.
-2. Name it e.g. `anatomia-proxy`, click **Deploy**, then **Edit code**.
-3. Delete the starter code, paste the entire contents of [`worker.js`](worker.js), **Save and deploy**.
-4. Copy the Worker URL shown, e.g. `https://anatomia-proxy.YOURNAME.workers.dev`.
+An `Origin` allowlist is an abuse-reduction measure, not authentication: custom
+HTTP clients can spoof the header. A future public deployment should add real
+authorization, rate limiting, and monitoring. DNS-based private-address
+resolution also requires protection outside this basic example.
 
-## Deploy — option B: Wrangler CLI
+## Historical deployment
+
+Only deploy this component when intentionally restoring the legacy analyzer:
 
 ```bash
 cd worker
-npx wrangler login
 npx wrangler deploy
 ```
 
-Wrangler prints the URL, e.g. `https://anatomia-proxy.YOURNAME.workers.dev`.
+Before deploying, update `ALLOWED_ORIGINS` in `worker.js`. Test with an explicit
+allowed origin because requests without an `Origin` header are rejected:
 
----
-
-## Connect the app
-
-Open `../index.html`, find this line in the `<script>`:
-
-```js
-const PROXY_WORKER_URL = "";
-```
-
-Paste your Worker URL between the quotes:
-
-```js
-const PROXY_WORKER_URL = "https://anatomia-proxy.YOURNAME.workers.dev";
-```
-
-That's it. The app now tries **your Worker first** for every URL and falls back to
-the public proxies only if the Worker is unreachable.
-
-> Prefer not to edit the file? You can instead set it at runtime in the browser
-> console: `localStorage.setItem('anatomia.proxyWorker', 'https://...workers.dev')`.
-> The localStorage value overrides the constant.
-
-## Test it
-
-Open this in a browser — you should see Wikipedia's raw HTML:
-
-```
-https://anatomia-proxy.YOURNAME.workers.dev/?url=https://www.wikipedia.org
-```
-
-## Lock it down (recommended)
-
-By default the Worker answers any origin. To stop others borrowing it, edit
-`ALLOWED_ORIGINS` at the top of `worker.js` to your own site(s) and redeploy:
-
-```js
-const ALLOWED_ORIGINS = ["https://edulab.dev", "http://localhost:8753"];
+```bash
+curl -H 'Origin: https://workszop.github.io' \
+  'https://YOUR-WORKER.workers.dev/?url=https://example.com'
 ```
