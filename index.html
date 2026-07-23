@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Interaktywne wyjaśnienie, jak pliki wędrują z serwera i stają się stroną w Twojej przeglądarce.">
+  <meta name="description" content="Interaktywna symulacja pokazująca, jak przeglądarka przechodzi od adresu URL i odpowiedzi HTTP do DOM, CSSOM, układu i gotowego widoku.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23211E1A'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%23EF5B3F'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%232E78C9'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23E8920C'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%237A5AC2'/%3E%3C/svg%3E">
-  <title>Anatomia strony WWW – jak działa strona internetowa</title>
+  <title>Jak przeglądarka ładuje stronę WWW — interaktywny przewodnik</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
@@ -37,6 +37,8 @@
       --sky: #2E78C9;
       --play-grape: #7A5AC2;
       --success: #2F8F5B;
+      --error: #C7463A;
+      --error-soft: #F9DDD8;
 
       --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
       --shadow-sm: 0 1px 2px rgba(33, 30, 26, .06), 0 1px 1px rgba(33, 30, 26, .04);
@@ -273,11 +275,8 @@
     .status-title { display: block; font-weight: 700; font-size: 14px; }
     .status-detail {
       display: block;
-      overflow: hidden;
       color: var(--ink-2);
       font: 400 11px/1.5 var(--font-mono);
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .request-btn {
@@ -343,9 +342,16 @@
     }
 
     .server-address {
-      margin: 10px 0 23px;
+      margin: 10px 0 6px;
       color: var(--dark-muted);
       font: 400 11px/1.5 var(--font-mono);
+    }
+
+    .server-hint {
+      margin: 0 0 20px;
+      color: var(--dark-muted);
+      font-size: 11px;
+      line-height: 1.5;
     }
 
     .server-rack {
@@ -509,8 +515,8 @@
       font: 400 9px/1 var(--font-mono);
     }
 
-    .request-line::before { content: "GET /"; top: 4%; }
-    .request-line::after { content: "200 OK"; bottom: 4%; }
+    .request-line::before { content: attr(data-request); top: 4%; }
+    .request-line::after { content: attr(data-response); bottom: 4%; }
 
     .direction {
       position: absolute;
@@ -545,6 +551,7 @@
     .packet[data-file="css"] { --packet-color: var(--css); }
     .packet[data-file="js"] { --packet-color: var(--js); }
     .packet[data-file="image"] { --packet-color: var(--image); }
+    .packet.is-error { --packet-color: var(--error); }
     .packet.fly { animation: deliver 1.25s cubic-bezier(.32, .72, .25, 1) forwards; }
 
     .browser-panel {
@@ -649,6 +656,264 @@
     .resource-pill[data-file="js"] { --pill-color: var(--js); }
     .resource-pill[data-file="image"] { --pill-color: var(--image); }
     .resource-pill.is-off { opacity: .3; text-decoration: line-through; }
+    .resource-pill.is-error {
+      --pill-color: var(--error);
+      border-color: rgba(199, 70, 58, .28);
+      color: var(--error);
+      background: var(--error-soft);
+      text-decoration: none;
+      opacity: 1;
+    }
+
+    .timeline {
+      grid-column: 1 / -1;
+      padding: 24px;
+      border-top: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .timeline-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .timeline-copy { max-width: 630px; }
+    .timeline-copy .panel-kicker { color: var(--marigold-ink); }
+    .timeline-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 650;
+      letter-spacing: -.01em;
+    }
+
+    .timeline-intro {
+      margin: 6px 0 0;
+      color: var(--ink-2);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .timeline-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .timeline-btn {
+      min-width: 38px;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-pill);
+      padding: 8px 11px;
+      color: var(--ink-2);
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .timeline-btn:hover:not(:disabled) {
+      color: var(--ink);
+      border-color: var(--marigold);
+    }
+
+    .timeline-btn:disabled {
+      cursor: default;
+      opacity: .4;
+    }
+
+    .timeline-btn.primary {
+      min-width: 92px;
+      color: var(--on-primary);
+      border-color: var(--ink);
+      background: var(--ink);
+    }
+
+    .timeline-progress {
+      min-width: 72px;
+      color: var(--ink-3);
+      font: 500 10px/1 var(--font-mono);
+      text-align: center;
+    }
+
+    .timeline-list {
+      min-height: 70px;
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .timeline-empty {
+      display: grid;
+      place-items: center;
+      min-height: 70px;
+      padding: 16px;
+      border: 1px dashed var(--line-2);
+      border-radius: var(--r-sm);
+      color: var(--ink-3);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .timeline-event {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 72px 12px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      color: inherit;
+      background: rgba(255, 255, 255, .65);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .12s ease;
+    }
+
+    .timeline-event:hover { border-color: var(--line-2); transform: translateY(-1px); }
+    .timeline-event:focus-visible {
+      outline: 3px solid var(--focus-ring-color);
+      outline-offset: 2px;
+    }
+
+    .timeline-event.is-current {
+      border-color: rgba(232, 146, 12, .55);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .timeline-event.is-selected {
+      border-color: var(--teal);
+      background: rgba(210, 235, 230, .42);
+    }
+
+    .timeline-event.is-error {
+      border-color: rgba(199, 70, 58, .25);
+      background: rgba(249, 221, 216, .45);
+    }
+
+    .timeline-code {
+      padding-top: 3px;
+      color: var(--ink-3);
+      font: 500 9px/1.3 var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .timeline-marker {
+      width: 9px;
+      height: 9px;
+      margin-top: 4px;
+      border: 2px solid var(--surface);
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 1px rgba(47, 143, 91, .35);
+    }
+
+    .timeline-event.is-current .timeline-marker {
+      background: var(--marigold);
+      box-shadow: 0 0 0 3px rgba(232, 146, 12, .14);
+    }
+
+    .timeline-event.is-error .timeline-marker {
+      background: var(--error);
+      box-shadow: 0 0 0 1px rgba(199, 70, 58, .35);
+    }
+
+    .timeline-event strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    .timeline-event p {
+      margin: 0;
+      color: var(--ink-2);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .exchange {
+      margin-top: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line-2);
+      border-radius: var(--r-md);
+      background: var(--surface);
+    }
+
+    .exchange[hidden] { display: none; }
+
+    .exchange-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper-2);
+    }
+
+    .exchange-step {
+      flex: none;
+      border-radius: var(--r-pill);
+      padding: 5px 8px;
+      color: var(--marigold-ink);
+      background: var(--marigold-soft);
+      font: 500 9px/1 var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .exchange-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .exchange-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .exchange-pane { min-width: 0; }
+    .exchange-pane + .exchange-pane { border-left: 1px solid var(--line); }
+
+    .exchange-label {
+      display: block;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink-2);
+      background: var(--paper);
+      font: 600 9px/1.3 var(--font-mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .exchange pre {
+      height: 330px;
+      margin: 0;
+      padding: 15px;
+      overflow: auto;
+      color: var(--paper-3);
+      background: var(--ink);
+    }
+
+    .exchange code {
+      font: 400 10px/1.6 var(--font-mono);
+      white-space: pre;
+    }
 
     .explainer {
       display: grid;
@@ -791,14 +1056,25 @@
       .hero-copy { margin-top: 16px; }
       .lab { border-radius: var(--r-lg); }
       .lab-toolbar { align-items: flex-start; padding: 14px; }
-      .status-detail { max-width: 190px; }
+      .status-detail { max-width: 220px; }
       .request-btn span, .request-btn kbd { display: none; }
       .request-btn { padding: 12px; }
       .server-panel, .browser-panel { padding: 18px 14px; }
       .server-rack { grid-template-columns: 1fr; }
       .file-toggle { min-height: 72px; }
+      .server-panel { order: 1; }
+      .network-panel { order: 2; }
+      .timeline { order: 3; }
+      .browser-panel { order: 4; }
       .browser-heading { align-items: flex-start; }
       .preview { height: 630px; }
+      .timeline { padding: 20px 14px; }
+      .timeline-head { display: block; }
+      .timeline-controls { justify-content: flex-start; margin-top: 16px; }
+      .timeline-event { grid-template-columns: 58px 10px minmax(0, 1fr); gap: 9px; padding: 10px; }
+      .exchange-grid { grid-template-columns: 1fr; }
+      .exchange-pane + .exchange-pane { border-left: 0; border-top: 1px solid var(--line); }
+      .exchange pre { height: auto; max-height: 260px; }
       .explainer { grid-template-columns: 1fr; }
       .explain-step { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
       .explain-step:last-child { border-bottom: 0; }
@@ -820,7 +1096,7 @@
         <span class="edu-tag">demo lab</span>
       </div>
       <div class="topbar-right">
-        <span class="lab-label">web anatomy · 01</span>
+        <span class="lab-label" data-i18n="labLabel">jak działa przeglądarka · 01</span>
         <div class="lang-switch" role="group" aria-label="Język / Language">
           <button class="lang-btn" type="button" data-lang="pl" aria-pressed="true">PL</button>
           <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
@@ -831,13 +1107,13 @@
 
   <main class="page">
     <section class="hero" aria-labelledby="page-title">
-      <p class="eyebrow" data-i18n="eyebrow">Strona rozłożona na części</p>
-      <h1 id="page-title" data-i18n="title">Każda strona to przesyłka.</h1>
+      <p class="eyebrow" data-i18n="eyebrow">Od adresu URL do pikseli</p>
+      <h1 id="page-title" data-i18n="title">Jak przeglądarka ładuje stronę WWW?</h1>
       <p class="hero-copy" data-i18n="lead"></p>
       <aside class="hero-note"><strong data-i18n="noteLabel"></strong> <span data-i18n="noteBody"></span></aside>
     </section>
 
-    <section class="lab" aria-label="Interactive website delivery lab">
+    <section class="lab" aria-label="Interaktywna symulacja ładowania strony" data-i18n-aria-label="labAria">
       <div class="lab-toolbar">
         <div class="status" id="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
@@ -848,7 +1124,7 @@
         </div>
         <button class="request-btn" id="requestButton" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"/></svg>
-          <span data-i18n="btnRequest"></span>
+          <span id="requestLabel" data-i18n="btnRequest"></span>
           <kbd aria-hidden="true">R</kbd>
         </button>
       </div>
@@ -857,7 +1133,8 @@
         <section class="server-panel" aria-labelledby="server-title">
           <p class="panel-kicker" data-i18n="kickerServer"></p>
           <h2 class="panel-heading" id="server-title" data-i18n="serverTitle"></h2>
-          <p class="server-address">/var/www/sunroom.studio/</p>
+          <p class="server-address">/var/www/polana.example/</p>
+          <p class="server-hint" data-i18n="serverHint"></p>
 
           <div class="server-rack" id="serverRack">
             <label class="file-toggle" data-file="html">
@@ -886,16 +1163,16 @@
             </label>
           </div>
 
-          <div class="server-actions" aria-label="Resource presets">
+          <div class="server-actions" aria-label="Szybki wybór zasobów" data-i18n-aria-label="presetsAria">
             <button class="text-btn" type="button" id="allOn" data-i18n="presetAll"></button>
             <button class="text-btn" type="button" id="htmlOnly" data-i18n="presetHtml"></button>
             <button class="text-btn" type="button" id="allOff" data-i18n="presetClear"></button>
           </div>
         </section>
 
-        <section class="network-panel" aria-label="Internet transfer">
+        <section class="network-panel" aria-label="Żądania i odpowiedzi przez internet" data-i18n-aria-label="networkAria">
           <span class="network-label">02 · Internet<br><span data-i18n="networkSub"></span></span>
-          <div class="request-line" id="requestLine" aria-hidden="true">
+          <div class="request-line" id="requestLine" data-request="GET /" data-response="—" aria-hidden="true">
             <span class="direction up">⌃</span>
             <span class="direction down">⌄</span>
             <span class="packet" data-file="html">HTML</span>
@@ -917,19 +1194,61 @@
               <span class="address-bar" id="addressBar">about:blank</span>
               <span class="browser-menu">···</span>
             </div>
-            <iframe class="preview" id="preview" title="Website assembled from the selected files" sandbox=""></iframe>
+            <iframe class="preview" id="preview" title="Strona wyrenderowana z odebranych zasobów" data-i18n-title="previewTitle" sandbox=""></iframe>
           </div>
 
-          <div class="browser-foot" id="resourcePills" aria-label="Browser resource state">
-            <span class="resource-pill" data-file="html" data-i18n="pillHtml"></span>
-            <span class="resource-pill" data-file="css" data-i18n="pillCss"></span>
-            <span class="resource-pill" data-file="js" data-i18n="pillJs"></span>
-            <span class="resource-pill" data-file="image" data-i18n="pillImage"></span>
+          <div class="browser-foot" id="resourcePills" aria-label="Stan zasobów w przeglądarce" data-i18n-aria-label="resourcesAria">
+            <span class="resource-pill" data-file="html" data-i18n="pillHtmlPending"></span>
+            <span class="resource-pill" data-file="css" data-i18n="pillCssPending"></span>
+            <span class="resource-pill" data-file="js" data-i18n="pillJsPending"></span>
+            <span class="resource-pill" data-file="image" data-i18n="pillImagePending"></span>
           </div>
+        </section>
+
+        <section class="timeline" aria-labelledby="timeline-title">
+          <div class="timeline-head">
+            <div class="timeline-copy">
+              <p class="panel-kicker" data-i18n="timelineKicker"></p>
+              <h2 class="timeline-title" id="timeline-title" data-i18n="timelineTitle"></h2>
+              <p class="timeline-intro" data-i18n="timelineIntro"></p>
+            </div>
+            <div class="timeline-controls" role="group" aria-label="Sterowanie przebiegiem symulacji" data-i18n-aria-label="timelineControlsAria">
+              <button class="timeline-btn" id="timelinePrev" type="button" disabled>
+                <span aria-hidden="true">←</span><span data-i18n="timelinePrev"></span>
+              </button>
+              <button class="timeline-btn primary" id="timelinePlay" type="button" disabled>
+                <span id="timelinePlayIcon" aria-hidden="true">▶</span><span id="timelinePlayLabel" data-i18n="timelinePlay"></span>
+              </button>
+              <button class="timeline-btn" id="timelineNext" type="button" disabled>
+                <span data-i18n="timelineNext"></span><span aria-hidden="true">→</span>
+              </button>
+              <button class="timeline-btn" id="timelineReset" type="button" disabled data-i18n="timelineReset"></button>
+              <span class="timeline-progress" id="timelineProgress" aria-live="polite"></span>
+            </div>
+          </div>
+          <ol class="timeline-list" id="timelineList" aria-live="polite">
+            <li class="timeline-empty" data-i18n="timelineEmpty"></li>
+          </ol>
+          <section class="exchange" id="timelineExchange" aria-labelledby="exchange-title" hidden>
+            <header class="exchange-head">
+              <span class="exchange-step" id="exchangeStep"></span>
+              <h3 class="exchange-title" id="exchange-title"></h3>
+            </header>
+            <div class="exchange-grid">
+              <article class="exchange-pane">
+                <span class="exchange-label" data-i18n="exchangeSent"></span>
+                <pre><code id="exchangeSentCode"></code></pre>
+              </article>
+              <article class="exchange-pane">
+                <span class="exchange-label" data-i18n="exchangeReceived"></span>
+                <pre><code id="exchangeReceivedCode"></code></pre>
+              </article>
+            </div>
+          </section>
         </section>
       </div>
 
-      <div class="explainer" aria-label="How the request works">
+      <div class="explainer" aria-label="Etapy ładowania i renderowania strony" data-i18n-aria-label="stepsAria">
         <article class="explain-step"><span class="step-no">01</span><div><h3 data-i18n="step1t"></h3><p data-i18n="step1p"></p></div></article>
         <article class="explain-step"><span class="step-no">02</span><div><h3 data-i18n="step2t"></h3><p data-i18n="step2p"></p></div></article>
         <article class="explain-step"><span class="step-no">03</span><div><h3 data-i18n="step3t"></h3><p data-i18n="step3p"></p></div></article>
@@ -941,7 +1260,7 @@
         <p class="panel-kicker" data-i18n="inspectKicker"></p>
         <h2 class="panel-heading" id="inspect-title" data-i18n="inspectTitle"></h2>
         <p data-i18n="inspectCopy"></p>
-        <div class="code-tabs" role="tablist" aria-label="Example source files">
+        <div class="code-tabs" role="tablist" aria-label="Przykładowe pliki źródłowe" data-i18n-aria-label="sourceTabsAria">
           <button class="code-tab" id="tab-html" data-file="html" role="tab" aria-selected="true" aria-controls="source-panel" tabindex="0">index.html</button>
           <button class="code-tab" id="tab-css" data-file="css" role="tab" aria-selected="false" aria-controls="source-panel" tabindex="-1">styles.css</button>
           <button class="code-tab" id="tab-js" data-file="js" role="tab" aria-selected="false" aria-controls="source-panel" tabindex="-1">app.js</button>
@@ -956,128 +1275,268 @@
     // ─── Translations ───
     const T = {
       pl: {
-        docTitle: "Anatomia strony WWW – jak działa strona internetowa",
-        metaDesc: "Interaktywne wyjaśnienie, jak pliki wędrują z serwera i stają się stroną w Twojej przeglądarce.",
-        eyebrow: "Strona rozłożona na części",
-        title: "Każda strona to przesyłka.",
-        lead: "Strona WWW to nie jedna rzecz. To paczka plików przechowywanych na serwerze, wysyłanych przez internet i składanych przez przeglądarkę w ułamku sekundy.",
-        noteLabel: "Twoja kolej:",
-        noteBody: "wyłącz pliki na serwerze, a potem wyślij żądanie, aby zobaczyć, co wnosi każdy z nich.",
-        btnRequest: "Wyślij żądanie przeglądarki",
-        btnRequestAria: "Wyślij żądanie przeglądarki (skrót: R)",
-        kickerServer: "01 · Źródło",
-        serverTitle: "Serwer WWW",
-        networkSub: "transfer HTTP",
+        docTitle: "Jak przeglądarka ładuje stronę WWW — interaktywny przewodnik",
+        metaDesc: "Interaktywna symulacja pokazująca, jak przeglądarka przechodzi od adresu URL i odpowiedzi HTTP do DOM, CSSOM, układu i gotowego widoku.",
+        labLabel: "jak działa przeglądarka · 01",
+        eyebrow: "Od adresu URL do pikseli",
+        title: "Jak przeglądarka ładuje stronę WWW?",
+        lead: "Po przejściu pod adres URL przeglądarka pobiera dokument HTML, odczytuje jego kod, dociąga wskazane zasoby i przetwarza je w widok, z którym można wejść w interakcję.",
+        noteLabel: "Sprawdź w praktyce:",
+        noteBody: "załaduj stronę ręcznie tylko za pierwszym razem. Potem przełączaj zasoby — podgląd i dziennik zaktualizują się automatycznie po każdej zmianie.",
+        btnRequest: "Załaduj stronę",
+        btnReload: "Załaduj ponownie",
+        btnRequestAria: "Załaduj stronę (skrót: R)",
+        btnReloadAria: "Załaduj stronę ponownie (skrót: R)",
+        kickerServer: "01 · Serwer",
+        serverTitle: "Serwer źródłowy",
+        serverHint: "Przełącznik ustala odpowiedź serwera: włączony = 200 OK, wyłączony = 404 Not Found.",
+        networkSub: "żądania i odpowiedzi HTTP",
         kickerClient: "03 · Klient",
-        browserTitle: "Twoja przeglądarka",
-        roleHtml: "Struktura · 4 KB",
-        roleCss: "Wygląd · 7 KB",
-        roleJs: "Zachowanie · 5 KB",
-        roleImage: "Media · 11 KB",
-        presetAll: "Wszystkie",
+        browserTitle: "Przeglądarka użytkownika",
+        roleHtml: "Treść i struktura · 4 KB",
+        roleCss: "Style i układ · 7 KB",
+        roleJs: "Logika i interakcje · 5 KB",
+        roleImage: "Grafika SVG · 11 KB",
+        presetAll: "Włącz wszystkie",
         presetHtml: "Tylko HTML",
-        presetClear: "Wyczyść",
-        pillHtml: "HTML sparsowany",
-        pillCss: "CSS zastosowany",
-        pillJs: "JS wykonany",
-        pillImage: "Obraz zdekodowany",
-        step1t: "Przeglądarka pyta",
-        step1p: "Po wpisaniu adresu URL przeglądarka najpierw znajduje adres IP serwera (DNS), a potem wysyła do niego żądanie HTTP.",
-        step2t: "Serwer odpowiada",
-        step2p: "Odpowiedź HTML wskazuje przeglądarce style, skrypty, obrazy, fonty i inne powiązane zasoby.",
-        step3t: "Przeglądarka buduje",
-        step3p: "Parsuje HTML, a każdy powiązany zasób pobiera osobnym żądaniem – często równolegle – po czym renderuje stronę i aktualizuje ją przyrostowo.",
-        inspectKicker: "Zajrzyj do plików",
-        inspectTitle: "Małe pliki. Różne zadania.",
-        inspectCopy: "Przeglądarka czyta każdy format inaczej. Wybierz plik, aby zobaczyć, jakie instrukcje niesie.",
-        statusReady: "Serwer gotowy",
-        statusReadyDetail: "pliki czekają na serwerze · wyślij żądanie przeglądarki",
-        statusAssembled: "Strona złożona",
-        statusAssembledDetail: "{files} · {kb} KB przesłane · strona wyrenderowana",
-        statusNoDoc: "Brak dokumentu",
-        statusNoDocDetail: "404 Not Found · nie odkryto powiązanych zasobów",
-        statusChanged: "Zmieniono wybór na serwerze",
-        statusChangedDetail: "wyślij nowe żądanie, aby dostarczyć te pliki",
-        statusRequesting: "Żądanie index.html",
-        statusRequestingDetail: "DNS: sunroom.studio → 198.51.100.7 · GET / HTTP/2",
-        statusTransferring: "Przesyłanie: {file}",
-        statusFirstOk: "200 OK · parsowanie HTML i wykrywanie powiązanych zasobów",
-        statusLinkedOk: "200 OK · powiązany zasób {i} z {total}",
-        statusNotFound: "Nie znaleziono index.html",
-        statusNotFoundDetail: "404 Not Found · nie wykryto powiązanych zasobów",
-        paintIdle: "czeka na pierwsze żądanie",
-        paintLinked: "HTML sparsowany → {res} → render",
-        paintNoLinked: "HTML sparsowany → render",
-        paintWaitingHtml: "czekam na index.html",
-        fileForms: ["1 plik", "{n} pliki", "{n} plików"],
-        resForms: ["1 powiązany zasób", "{n} powiązane zasoby", "{n} powiązanych zasobów"],
-        previewIdleTitle: "Pusta karta",
-        previewIdleBody: "Przeglądarka jeszcze o nic nie poprosiła. Wyślij żądanie, aby pobrać stronę z serwera.",
-        preview404Title: "Brak dokumentu HTML",
-        preview404Body: "Bez index.html przeglądarka nie ma struktury do sparsowania i nie ma czego złożyć.",
-        previewJsNote: "app.js jest wyłączony – przyciski nie mogą reagować"
+        presetClear: "Wyłącz wszystkie",
+        pillHtmlPending: "HTML · oczekuje",
+        pillCssPending: "CSS · oczekuje",
+        pillJsPending: "JavaScript · oczekuje",
+        pillImagePending: "SVG · oczekuje",
+        pillHtmlOk: "HTML → DOM",
+        pillCssOk: "CSS → CSSOM",
+        pillJsOk: "JavaScript wykonany",
+        pillImageOk: "SVG zdekodowany",
+        pillHtmlError: "HTML · 404",
+        pillCssError: "CSS · 404",
+        pillJsError: "JavaScript · 404",
+        pillImageError: "SVG · 404",
+        step1t: "Nawigacja zaczyna się od URL",
+        step1p: "Przeglądarka ustala, dokąd wysłać żądanie — korzystając z DNS, jeśli adres nie jest już znany — nawiązuje połączenie i prosi serwer o dokument.",
+        step2t: "HTML uruchamia kolejne pobrania",
+        step2p: "Serwer zwraca odpowiedź HTTP. Gdy docierają kolejne bajty HTML, parser buduje DOM, a odwołania do arkuszy CSS, skryptów i obrazów uruchamiają następne żądania, chyba że zasób jest już w pamięci podręcznej.",
+        step3t: "Silnik renderujący tworzy widok",
+        step3p: "Przeglądarka przetwarza CSS do CSSOM, łączy go z DOM, oblicza style i układ, a następnie maluje i składa warstwy na ekranie. JavaScript może zmieniać DOM i uruchamiać kolejne aktualizacje.",
+        inspectKicker: "Zobacz kod źródłowy",
+        inspectTitle: "Każdy zasób ma inną rolę.",
+        inspectCopy: "To pełna zawartość czterech zasobów używanych przez symulację. HTML odwołuje się do pozostałych plików, a podgląd zmienia się zgodnie z odpowiedziami 200 lub 404.",
+        statusReady: "Gotowe do nawigacji",
+        statusReadyDetail: "serwer udostępnia zasoby · uruchom ładowanie strony",
+        statusAssembled: "Widok gotowy",
+        statusAssembledDetail: "{files} · odebrano {kb} KB · ukończono układ i malowanie",
+        statusNoDoc: "Nie otrzymano dokumentu HTML",
+        statusNoDocDetail: "404 Not Found dla GET / · nie odkryto odwołań do zasobów",
+        statusChanged: "Zmieniono zasoby — aktualizuję podgląd",
+        statusChangedDetail: "przeglądarka automatycznie ponawia żądania dla aktualnego zestawu",
+        statusRequesting: "Żądanie dokumentu HTML",
+        statusRequestingDetail: "ustalenie hosta i połączenie HTTPS · GET / HTTP/2",
+        statusTransferring: "Odbieranie: {file}",
+        statusFirstOk: "200 OK · parser buduje DOM i odkrywa odwołania do zasobów",
+        statusLinkedOk: "200 OK · odebrano zasób {i} z {total}",
+        statusNotFound: "Serwer zwrócił 404",
+        statusNotFoundDetail: "GET / → 404 Not Found · brak dokumentu HTML do parsowania",
+        paintIdle: "nawigacja jeszcze się nie rozpoczęła",
+        paintLinked: "DOM + {res} → style → układ → malowanie",
+        paintNoLinked: "DOM → style domyślne → układ → malowanie",
+        paintWaitingHtml: "brak dokumentu do renderowania",
+        fileForms: ["1 zasób", "{n} zasoby", "{n} zasobów"],
+        resForms: ["1 zasób", "{n} zasoby", "{n} zasobów"],
+        previewIdleTitle: "Nawigacja jeszcze się nie rozpoczęła",
+        previewIdleBody: "Uruchom ładowanie, aby przeglądarka poprosiła serwer o dokument i zaczęła tworzyć widok strony.",
+        preview404Title: "Brak dokumentu do wyświetlenia",
+        preview404Body: "W tej symulacji serwer odpowiedział 404 na żądanie dokumentu. Bez HTML przeglądarka nie odkryje odwołań do pozostałych zasobów.",
+        previewJsNote: "Bez app.js przyciski pozostają nieaktywne.",
+        previewImageAlt: "Zachód słońca nad warstwami zielonych gór",
+        previewImageMissing: "Nie pobrano pliku hero.svg",
+        labAria: "Interaktywna symulacja ładowania strony",
+        presetsAria: "Szybki wybór zasobów",
+        networkAria: "Żądania i odpowiedzi przez internet",
+        previewTitle: "Strona wyrenderowana z odebranych zasobów",
+        resourcesAria: "Stan zasobów w przeglądarce",
+        stepsAria: "Etapy ładowania i renderowania strony",
+        sourceTabsAria: "Przykładowe pliki źródłowe",
+        timelineKicker: "Przebieg nawigacji",
+        timelineTitle: "Dziennik ładowania",
+        timelineIntro: "Każdy wykonany krok pozostaje na liście. Kliknij go, aby zobaczyć wysyłany i odbierany kod, albo steruj przebiegiem krok po kroku.",
+        timelinePrev: "Wstecz",
+        timelinePlay: "Odtwórz",
+        timelinePause: "Pauza",
+        timelineNext: "Dalej",
+        timelineReset: "Od początku",
+        timelineEmpty: "Załaduj stronę, aby zobaczyć kolejność żądań, odpowiedzi i renderowania.",
+        timelineControlsAria: "Sterowanie przebiegiem symulacji",
+        timelineProgress: "krok {current} z {total}",
+        timelineNavigateTitle: "Nawigacja do polana.example",
+        timelineNavigateDetail: "Przeglądarka ustala adres hosta, nawiązuje połączenie HTTPS i wysyła GET /.",
+        timelineHtmlOkTitle: "index.html: 200 OK",
+        timelineHtmlOkDetail: "Serwer zwraca dokument HTML. Przeglądarka może rozpocząć jego parsowanie jeszcze podczas odbierania danych.",
+        timelineHtmlErrorTitle: "index.html: 404 Not Found",
+        timelineHtmlErrorDetail: "Żądanie dotarło do serwera, ale dokument nie jest dostępny. Bez jego treści nie da się odkryć odwołań do pozostałych zasobów.",
+        timelineParseTitle: "Parser buduje DOM",
+        timelineParseDetail: "Przeglądarka zamienia znaczniki HTML w drzewo dokumentu i odnajduje odwołania do styles.css, app.js oraz hero.svg.",
+        timelineRequestsTitle: "Trzy kolejne żądania",
+        timelineRequestsDetail: "Przeglądarka prosi o CSS, JavaScript i obraz. Te żądania mogą być obsługiwane równolegle i zakończyć się w różnej kolejności.",
+        timelineResourceOkTitle: "{file}: 200 OK",
+        timelineResourceOkDetail: "Odebrano {file} ({kb} KB). Przeglądarka może teraz przetworzyć ten zasób.",
+        timelineResourceErrorTitle: "{file}: 404 Not Found",
+        timelineResourceErrorDetail: "Przeglądarka poprosiła o {file}, ale serwer go nie udostępnił. Ładowanie dokumentu trwa dalej bez tego zasobu.",
+        timelineRenderTitle: "Style, układ i malowanie",
+        timelineRenderDetail: "Przeglądarka tworzy widok z odebranych zasobów. Załadowane: {loaded}. Błędy: {errors}.",
+        timelineNone: "brak",
+        paintConnecting: "połączenie → GET /",
+        paintHtml: "HTML odebrany",
+        paintParsing: "HTML → DOM",
+        paintRequesting: "3 żądania zasobów",
+        paintResource: "przetwarzanie odpowiedzi",
+        paintComplete: "style → układ → malowanie",
+        paintFailed: "404 · brak dokumentu",
+        exchangeSent: "Przeglądarka wysyła",
+        exchangeReceived: "Przeglądarka otrzymuje lub tworzy",
+        codeNoNetwork: "— Brak transmisji sieciowej w tym kroku.",
+        codeWaiting: "— Oczekiwanie na odpowiedź serwera.",
+        codeResponsesPending: "— Odpowiedzi mogą nadejść równolegle i w innej kolejności.",
+        codeDomComment: "Wynik parsowania — uproszczone drzewo DOM:",
+        codeRenderComment: "Wynik lokalnego przetwarzania w silniku renderującym:",
+        codeCssLoaded: "CSSOM (styles.css)",
+        codeCssMissing: "style domyślne przeglądarki (brak styles.css)",
+        codeJsLoaded: "JavaScript wykonany",
+        codeJsMissing: "brak logiki JavaScript",
+        codeImageLoaded: "SVG zdekodowany",
+        codeImageMissing: "uszkodzony obraz + tekst alt",
+        codeRenderStages: "drzewo renderowania\n        ↓\nobliczenie stylów\n        ↓\nukład elementów\n        ↓\nmalowanie i składanie warstw"
       },
       en: {
-        docTitle: "Web Anatomy – how websites work",
-        metaDesc: "An interactive explanation of how web files travel from a server and become a website in your browser.",
-        eyebrow: "A website, taken apart",
-        title: "Every website is a delivery.",
-        lead: "A web page is not one thing. It is a bundle of files stored on a server, sent across the internet, then assembled by your browser in a fraction of a second.",
-        noteLabel: "Your turn:",
-        noteBody: "switch files off at the server, then send a request to see exactly what each one contributes.",
-        btnRequest: "Send browser request",
-        btnRequestAria: "Send browser request (shortcut: R)",
-        kickerServer: "01 · Origin",
-        serverTitle: "Web server",
-        networkSub: "HTTP transfer",
+        docTitle: "How a browser loads a web page — interactive guide",
+        metaDesc: "An interactive simulation of how a browser moves from a URL and HTTP responses to the DOM, CSSOM, layout, and a rendered page.",
+        labLabel: "how browsers work · 01",
+        eyebrow: "From URL to pixels",
+        title: "How does a browser load a web page?",
+        lead: "When you navigate to a URL, the browser fetches an HTML document, reads its code, retrieves the resources it references, and processes them into an interactive view.",
+        noteLabel: "Try it:",
+        noteBody: "load the page manually only the first time. Then switch resources on or off—the preview and loading log will update automatically after every change.",
+        btnRequest: "Load the page",
+        btnReload: "Reload the page",
+        btnRequestAria: "Load the page (shortcut: R)",
+        btnReloadAria: "Reload the page (shortcut: R)",
+        kickerServer: "01 · Server",
+        serverTitle: "Origin server",
+        serverHint: "Each switch controls the server response: on = 200 OK, off = 404 Not Found.",
+        networkSub: "HTTP requests and responses",
         kickerClient: "03 · Client",
-        browserTitle: "Your browser",
-        roleHtml: "Structure · 4 KB",
-        roleCss: "Appearance · 7 KB",
-        roleJs: "Behaviour · 5 KB",
-        roleImage: "Media · 11 KB",
-        presetAll: "Select all",
+        browserTitle: "User's browser",
+        roleHtml: "Content and structure · 4 KB",
+        roleCss: "Styles and layout · 7 KB",
+        roleJs: "Logic and interactions · 5 KB",
+        roleImage: "SVG graphic · 11 KB",
+        presetAll: "Enable all",
         presetHtml: "HTML only",
-        presetClear: "Clear",
-        pillHtml: "HTML parsed",
-        pillCss: "CSS applied",
-        pillJs: "JS executed",
-        pillImage: "Image decoded",
-        step1t: "The browser asks",
-        step1p: "Entering a URL first resolves the server's IP address (DNS), then sends an HTTP request to the server that owns the website files.",
-        step2t: "The server responds",
-        step2p: "The HTML response points the browser toward styles, scripts, images, fonts, and other linked resources.",
-        step3t: "The browser builds",
-        step3p: "It parses HTML and fetches every linked resource with its own request, often in parallel, then renders and updates the page incrementally.",
-        inspectKicker: "Look inside the files",
-        inspectTitle: "Small files. Different jobs.",
-        inspectCopy: "The browser reads each format differently. Select a file to see the instruction it carries.",
-        statusReady: "Server ready",
-        statusReadyDetail: "files are waiting on the server · send a browser request",
-        statusAssembled: "Website assembled",
-        statusAssembledDetail: "{files} · {kb} KB transferred · page rendered",
-        statusNoDoc: "No document received",
-        statusNoDocDetail: "404 Not Found · no linked resources discovered",
-        statusChanged: "Server selection changed",
-        statusChangedDetail: "send a new request to deliver these files",
-        statusRequesting: "Requesting index.html",
-        statusRequestingDetail: "DNS: sunroom.studio → 198.51.100.7 · GET / HTTP/2",
-        statusTransferring: "Transferring {file}",
-        statusFirstOk: "200 OK · parsing HTML and discovering linked resources",
-        statusLinkedOk: "200 OK · linked resource {i} of {total}",
-        statusNotFound: "index.html not found",
-        statusNotFoundDetail: "404 Not Found · linked resources were not discovered",
-        paintIdle: "waiting for the first request",
-        paintLinked: "HTML parsed → {res} → render",
-        paintNoLinked: "HTML parsed → render",
-        paintWaitingHtml: "Waiting for index.html",
-        fileForms: ["1 file", "{n} files", "{n} files"],
-        resForms: ["1 linked resource", "{n} linked resources", "{n} linked resources"],
-        previewIdleTitle: "Blank tab",
-        previewIdleBody: "The browser has not asked for anything yet. Send a request to fetch the website from the server.",
-        preview404Title: "No HTML document",
-        preview404Body: "Without index.html, the browser has no structure to parse and nothing to assemble.",
-        previewJsNote: "app.js is off – buttons cannot respond"
+        presetClear: "Disable all",
+        pillHtmlPending: "HTML · pending",
+        pillCssPending: "CSS · pending",
+        pillJsPending: "JavaScript · pending",
+        pillImagePending: "SVG · pending",
+        pillHtmlOk: "HTML → DOM",
+        pillCssOk: "CSS → CSSOM",
+        pillJsOk: "JavaScript executed",
+        pillImageOk: "SVG decoded",
+        pillHtmlError: "HTML · 404",
+        pillCssError: "CSS · 404",
+        pillJsError: "JavaScript · 404",
+        pillImageError: "SVG · 404",
+        step1t: "Navigation starts with a URL",
+        step1p: "The browser determines where to send the request—using DNS if the address is not already known—opens a connection, and asks the server for a document.",
+        step2t: "HTML triggers more fetches",
+        step2p: "The server returns an HTTP response. As HTML bytes arrive, the parser builds the DOM, while references to stylesheets, scripts, and images trigger more requests unless a resource is already cached.",
+        step3t: "The rendering engine creates the view",
+        step3p: "The browser processes CSS into the CSSOM, combines it with the DOM, calculates styles and layout, then paints and composites layers on screen. JavaScript can change the DOM and trigger further updates.",
+        inspectKicker: "Inspect the source",
+        inspectTitle: "Every resource has a different role.",
+        inspectCopy: "These are the complete contents of the four resources used by the simulation. HTML references the other files, and the preview changes according to their 200 or 404 responses.",
+        statusReady: "Ready to navigate",
+        statusReadyDetail: "the server is exposing resources · start loading the page",
+        statusAssembled: "View ready",
+        statusAssembledDetail: "{files} · {kb} KB received · layout and paint complete",
+        statusNoDoc: "No HTML document received",
+        statusNoDocDetail: "404 Not Found for GET / · no resource references discovered",
+        statusChanged: "Resources changed — updating the preview",
+        statusChangedDetail: "the browser is automatically repeating requests for the current set",
+        statusRequesting: "Requesting the HTML document",
+        statusRequestingDetail: "host resolution and HTTPS connection · GET / HTTP/2",
+        statusTransferring: "Receiving {file}",
+        statusFirstOk: "200 OK · the parser is building the DOM and discovering resource references",
+        statusLinkedOk: "200 OK · received resource {i} of {total}",
+        statusNotFound: "The server returned 404",
+        statusNotFoundDetail: "GET / → 404 Not Found · no HTML document to parse",
+        paintIdle: "navigation has not started yet",
+        paintLinked: "DOM + {res} → style → layout → paint",
+        paintNoLinked: "DOM → default styles → layout → paint",
+        paintWaitingHtml: "no document to render",
+        fileForms: ["1 resource", "{n} resources", "{n} resources"],
+        resForms: ["1 resource", "{n} resources", "{n} resources"],
+        previewIdleTitle: "Navigation has not started yet",
+        previewIdleBody: "Start loading so the browser can request a document from the server and begin creating the page view.",
+        preview404Title: "No document to display",
+        preview404Body: "In this simulation, the server returned 404 for the document request. Without HTML, the browser will not discover references to the remaining resources.",
+        previewJsNote: "Without app.js, the buttons remain inactive.",
+        previewImageAlt: "Sunset over layered green mountains",
+        previewImageMissing: "hero.svg was not fetched",
+        labAria: "Interactive page-loading simulation",
+        presetsAria: "Quick resource selection",
+        networkAria: "Requests and responses over the internet",
+        previewTitle: "Page rendered from the received resources",
+        resourcesAria: "Browser resource state",
+        stepsAria: "Page loading and rendering stages",
+        sourceTabsAria: "Example source files",
+        timelineKicker: "Navigation sequence",
+        timelineTitle: "Loading log",
+        timelineIntro: "Every completed step remains in the list. Click one to inspect the code sent and received, or control the sequence one step at a time.",
+        timelinePrev: "Back",
+        timelinePlay: "Play",
+        timelinePause: "Pause",
+        timelineNext: "Next",
+        timelineReset: "Restart",
+        timelineEmpty: "Load the page to see the sequence of requests, responses, and rendering work.",
+        timelineControlsAria: "Simulation playback controls",
+        timelineProgress: "step {current} of {total}",
+        timelineNavigateTitle: "Navigate to polana.example",
+        timelineNavigateDetail: "The browser resolves the host, opens an HTTPS connection, and sends GET /.",
+        timelineHtmlOkTitle: "index.html: 200 OK",
+        timelineHtmlOkDetail: "The server returns an HTML document. The browser can begin parsing it while more data is still arriving.",
+        timelineHtmlErrorTitle: "index.html: 404 Not Found",
+        timelineHtmlErrorDetail: "The request reached the server, but the document is unavailable. Without its contents, references to the remaining resources cannot be discovered.",
+        timelineParseTitle: "The parser builds the DOM",
+        timelineParseDetail: "The browser turns HTML markup into a document tree and finds references to styles.css, app.js, and hero.svg.",
+        timelineRequestsTitle: "Three more requests",
+        timelineRequestsDetail: "The browser requests the CSS, JavaScript, and image. These requests may run in parallel and finish in a different order.",
+        timelineResourceOkTitle: "{file}: 200 OK",
+        timelineResourceOkDetail: "Received {file} ({kb} KB). The browser can now process this resource.",
+        timelineResourceErrorTitle: "{file}: 404 Not Found",
+        timelineResourceErrorDetail: "The browser requested {file}, but the server did not provide it. Document loading continues without that resource.",
+        timelineRenderTitle: "Style, layout, and paint",
+        timelineRenderDetail: "The browser creates the view from the resources it received. Loaded: {loaded}. Errors: {errors}.",
+        timelineNone: "none",
+        paintConnecting: "connection → GET /",
+        paintHtml: "HTML received",
+        paintParsing: "HTML → DOM",
+        paintRequesting: "3 resource requests",
+        paintResource: "processing responses",
+        paintComplete: "style → layout → paint",
+        paintFailed: "404 · no document",
+        exchangeSent: "Browser sends",
+        exchangeReceived: "Browser receives or creates",
+        codeNoNetwork: "— No network transmission occurs during this step.",
+        codeWaiting: "— Waiting for the server response.",
+        codeResponsesPending: "— Responses may arrive in parallel and in a different order.",
+        codeDomComment: "Parsing result — simplified DOM tree:",
+        codeRenderComment: "Result of local processing in the rendering engine:",
+        codeCssLoaded: "CSSOM (styles.css)",
+        codeCssMissing: "browser default styles (styles.css missing)",
+        codeJsLoaded: "JavaScript executed",
+        codeJsMissing: "no JavaScript logic",
+        codeImageLoaded: "SVG decoded",
+        codeImageMissing: "broken image + alt text",
+        codeRenderStages: "render tree\n        ↓\nstyle calculation\n        ↓\nlayout\n        ↓\npaint and compositing"
       }
     };
 
@@ -1091,21 +1550,19 @@
     function t(key) { return T[lang][key]; }
     function fmt(str, vars) { return str.replace(/\{(\w+)\}/g, (m, k) => vars[k]); }
 
-    function plural(n, forms) {
-      const form = n === 1 ? forms[0]
-        : (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) ? forms[1]
-        : forms[2];
-      return fmt(form, { n });
-    }
-
     // ─── State ───
     const fileSizes = { html: 4, css: 7, js: 5, image: 11 };
     const fileNames = { html: "index.html", css: "styles.css", js: "app.js", image: "hero.svg" };
     const files = ["html", "css", "js", "image"];
+    const linkedFiles = ["css", "js", "image"];
     let hasRequested = false;
-    let deliveredFiles = [];
     let lastRequestedFiles = [];
-    let requestTimers = [];
+    let timelineEvents = [];
+    let timelineIndex = -1;
+    let timelineSelectedIndex = -1;
+    let timelineTimer = null;
+    let autoReloadTimer = null;
+    let isPlaying = false;
 
     // ─── DOM refs ───
     const inputs = Object.fromEntries(files.map(file => [file, document.querySelector(`input[value="${file}"]`)]));
@@ -1116,40 +1573,385 @@
     const preview = document.getElementById("preview");
     const addressBar = document.getElementById("addressBar");
     const requestButton = document.getElementById("requestButton");
+    const requestLabel = document.getElementById("requestLabel");
+    const requestLine = document.getElementById("requestLine");
+    const timelineList = document.getElementById("timelineList");
+    const timelinePrev = document.getElementById("timelinePrev");
+    const timelinePlay = document.getElementById("timelinePlay");
+    const timelinePlayIcon = document.getElementById("timelinePlayIcon");
+    const timelinePlayLabel = document.getElementById("timelinePlayLabel");
+    const timelineNext = document.getElementById("timelineNext");
+    const timelineReset = document.getElementById("timelineReset");
+    const timelineProgress = document.getElementById("timelineProgress");
+    const timelineExchange = document.getElementById("timelineExchange");
+    const exchangeStep = document.getElementById("exchangeStep");
+    const exchangeTitle = document.getElementById("exchange-title");
+    const exchangeSentCode = document.getElementById("exchangeSentCode");
+    const exchangeReceivedCode = document.getElementById("exchangeReceivedCode");
     const langButtons = [...document.querySelectorAll(".lang-btn")];
 
     // ─── Simulated website content (teaching subject — deliberately not edulab-styled) ───
     const imageSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520">
-      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5bf55"/><stop offset="1" stop-color="#ef7656"/></linearGradient></defs>
-      <rect width="900" height="520" rx="26" fill="#e7eddf"/><circle cx="720" cy="105" r="64" fill="url(#g)"/>
-      <path d="M0 420 205 230l125 122 110-106 260 274H0Z" fill="#7fa37a"/><path d="M160 520 510 190l390 330Z" fill="#315b52"/>
-      <path d="m420 275 90-85 99 104-66-24-33 38-31-38Z" fill="#fff9e9" opacity=".9"/>
-      <g fill="#193831"><rect x="92" y="290" width="15" height="115" rx="7"/><circle cx="100" cy="272" r="42"/></g>
-    </svg>`;
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#d9e4dc"/>
+      <stop offset="1" stop-color="#f4d7a4"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff3b0"/>
+      <stop offset="1" stop-color="#e8a84a"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="520" rx="28" fill="url(#sky)"/>
+  <circle cx="718" cy="105" r="58" fill="#f4bd62"/>
+  <path d="M0 362 185 214l145 112 115-96 222 184H0Z" fill="#789286"/>
+  <path d="M238 392 525 162l375 300v58H238Z" fill="#34584f"/>
+  <path d="m438 232 87-70 92 74-58-19-34 28-29-26Z" fill="#f4eee2" opacity=".9"/>
+  <path d="M0 397c143-43 272-30 391 12 147 53 322 40 509-8v119H0Z" fill="#243f39"/>
+  <g transform="translate(218 285)">
+    <rect x="0" y="62" width="232" height="132" rx="5" fill="#c77b4e"/>
+    <path d="M-28 72 116 0l145 72Z" fill="#5b3328"/>
+    <rect x="91" y="112" width="51" height="82" rx="3" fill="#5b3328"/>
+    <rect x="26" y="100" width="48" height="43" rx="3" fill="url(#window)"/>
+    <rect x="159" y="100" width="48" height="43" rx="3" fill="url(#window)"/>
+    <path d="M50 100v43M26 121h48M183 100v43M159 121h48" stroke="#704331" stroke-width="5"/>
+    <rect x="174" y="4" width="27" height="53" fill="#704331"/>
+    <path d="M187 0c-23-27 27-31 4-61 38 27-5 39 20 62Z" fill="#fff" opacity=".52"/>
+  </g>
+  <g fill="#172f2a">
+    <path d="m92 430 42-112 42 112Z"/><rect x="128" y="419" width="12" height="62"/>
+    <path d="m720 442 50-138 50 138Z"/><rect x="764" y="427" width="13" height="68"/>
+    <path d="m786 456 36-98 36 98Z"/><rect x="817" y="445" width="11" height="55"/>
+  </g>
+</svg>`;
     const imageUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(imageSvg)}`;
 
-    const previewCss = `
-      * { box-sizing: border-box; }
-      body { margin: 0; background: #f7f2e8; color: #193831; font-family: Arial, sans-serif; }
-      header { display: flex; justify-content: space-between; align-items: center; padding: 22px 30px; }
-      .logo { font-weight: 800; font-size: 18px; letter-spacing: -.5px; }
-      nav { display: flex; gap: 22px; color: #53645f; font-size: 12px; }
-      main { padding: 14px 30px 28px; }
-      .hero-image { width: 100%; height: 205px; display: block; object-fit: cover; border-radius: 18px; box-shadow: 0 12px 25px rgba(25,56,49,.13); }
-      .image-placeholder { height: 205px; display: grid; place-items: center; border: 1px dashed #b7b2a8; border-radius: 18px; color: #8a8982; font: 12px monospace; background: #efebe2; }
-      .copy { display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: end; padding: 23px 3px 0; }
-      .eyebrow { margin: 0 0 7px; color: #be603d; font-size: 10px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
-      h1 { margin: 0; max-width: 390px; font-size: clamp(35px, 6vw, 57px); line-height: .95; letter-spacing: -3px; }
-      .side { color: #65726e; font-size: 12px; line-height: 1.55; }
-      button { border: 0; border-radius: 999px; padding: 10px 15px; color: white; background: #193831; font-weight: 700; cursor: pointer; }
-      button:disabled { opacity: .5; cursor: default; }
-      .counter { display: inline-block; min-width: 22px; margin-left: 6px; padding: 2px 7px; border-radius: 99px; color: #193831; background: #f5bf55; }
-      .js-note { margin: 8px 0 0; color: #888; font: 10px monospace; }
-      body.night { background: #152521; color: #f7f2e8; }
-      body.night nav, body.night .side { color: #b9c7c2; }
-      body.night button { color: #152521; background: #f5bf55; }
-      @media (max-width: 520px) { header { padding: 17px 18px; } nav { gap: 10px; } main { padding: 8px 18px 22px; } .hero-image,.image-placeholder{height:230px}.copy{grid-template-columns:1fr;gap:12px}h1{font-size:43px}.side{max-width:320px} }
-    `;
+    const previewCss = `:root {
+  --forest: #183d35;
+  --forest-light: #2d5d50;
+  --cream: #f5f0e6;
+  --paper: #fffdf7;
+  --orange: #d96f3b;
+  --muted: #6d776f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--forest);
+  background: var(--cream);
+  font-family: Arial, sans-serif;
+  transition: color .25s ease, background .25s ease;
+}
+
+button,
+a { font: inherit; }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-header {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 11px 26px;
+}
+
+.logo {
+  margin-right: auto;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.logo span { color: var(--orange); }
+
+nav {
+  display: flex;
+  gap: 17px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.theme-button {
+  border: 1px solid rgba(24, 61, 53, .18);
+  border-radius: 999px;
+  padding: 7px 11px;
+  color: var(--forest);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+main { padding: 4px 26px 24px; }
+
+.image-wrap { position: relative; }
+
+.hero-image {
+  width: 100%;
+  height: 180px;
+  display: block;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: 0 14px 30px rgba(24, 61, 53, .15);
+}
+
+.place-label {
+  position: absolute;
+  left: 13px;
+  bottom: 13px;
+  margin: 0;
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: white;
+  background: rgba(19, 46, 40, .8);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  backdrop-filter: blur(8px);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(190px, .8fr);
+  gap: 22px;
+  align-items: end;
+  padding-top: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--orange);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 390px;
+  margin: 0;
+  font-size: clamp(34px, 6vw, 52px);
+  line-height: .94;
+  letter-spacing: -.055em;
+}
+
+.intro {
+  max-width: 420px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.feature-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature-list li {
+  border: 1px solid rgba(24, 61, 53, .14);
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.booking-card {
+  border-radius: 16px;
+  padding: 15px;
+  color: white;
+  background: var(--forest);
+  box-shadow: 0 10px 22px rgba(24, 61, 53, .16);
+}
+
+.booking-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.price-label {
+  display: block;
+  color: #b8cac4;
+  font-size: 9px;
+}
+
+.price {
+  display: block;
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.js-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #d8b9aa;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.js-state::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d96f3b;
+}
+
+.js-state.is-active { color: #bfe3cd; }
+.js-state.is-active::before { background: #56ba78; }
+
+.booking-button {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--forest);
+  background: #f4c768;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.booking-button.is-confirmed {
+  color: white;
+  background: #39865b;
+}
+
+.booking-message {
+  min-height: 13px;
+  margin: 8px 0 0;
+  color: #b8cac4;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+body.night {
+  --cream: #10251f;
+  --paper: #17372f;
+  --forest: #ecf2eb;
+  --muted: #adbbb4;
+}
+
+body.night .booking-card {
+  color: #ecf2eb;
+  background: #24483f;
+}
+
+body.night .theme-button {
+  color: #ecf2eb;
+  border-color: rgba(236, 242, 235, .25);
+}
+
+body.night .feature-list li {
+  border-color: rgba(236, 242, 235, .2);
+}
+
+@media (max-width: 520px) {
+  .site-header { gap: 11px; padding: 10px 16px; }
+  nav { gap: 9px; }
+  main { padding: 3px 16px 20px; }
+  .hero-image { height: 185px; }
+  .content-grid { grid-template-columns: 1fr; gap: 14px; padding-top: 17px; }
+  h1 { font-size: 40px; }
+  .booking-card { padding: 13px; }
+}`;
+
+    const previewJs = `const bookingButton = document.querySelector("#book");
+const bookingLabel = document.querySelector("#book-label");
+const bookingMessage = document.querySelector("#booking-message");
+const themeButton = document.querySelector("#theme");
+const themeLabel = document.querySelector("#theme-label");
+const jsState = document.querySelector("#js-state");
+
+jsState.textContent = "Interakcje aktywne";
+jsState.classList.add("is-active");
+
+bookingButton.addEventListener("click", () => {
+  const confirmed = bookingButton.classList.toggle("is-confirmed");
+  bookingButton.setAttribute("aria-pressed", String(confirmed));
+  bookingLabel.textContent = confirmed ? "Termin dostępny ✓" : "Sprawdź termin";
+  bookingMessage.textContent = confirmed
+    ? "Najbliższy wolny weekend: 18–20 października."
+    : "Kliknij, aby sprawdzić najbliższy termin.";
+});
+
+themeButton.addEventListener("click", () => {
+  const nightMode = document.body.classList.toggle("night");
+  themeButton.setAttribute("aria-pressed", String(nightMode));
+  themeLabel.textContent = nightMode ? "Dzień" : "Wieczór";
+});`;
+
+    const previewHtml = `<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Polana — domki w Beskidzie Niskim</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href="#">polana<span>.</span></a>
+      <nav>
+        <a href="#domki">Domki</a>
+        <a href="#okolica">Okolica</a>
+      </nav>
+      <button class="theme-button" id="theme" type="button" aria-pressed="false">
+        <span id="theme-label">Wieczór</span>
+      </button>
+    </header>
+    <main>
+      <div class="image-wrap" id="okolica">
+        <img class="hero-image" src="hero.svg" alt="Drewniany domek pośród gór o zachodzie słońca">
+        <p class="place-label">Beskid Niski · 650 m n.p.m.</p>
+      </div>
+      <section class="content-grid" id="domki">
+        <div class="hero-copy">
+          <p class="eyebrow">Dwa domki. Dużo ciszy.</p>
+          <h1>Zwolnij. Jesteś na miejscu.</h1>
+          <p class="intro">Drewniane domki na skraju lasu, widok na góry i śniadanie zostawiane rano pod drzwiami.</p>
+          <ul class="feature-list">
+            <li>2–4 osoby</li>
+            <li>Sauna</li>
+            <li>Pies mile widziany</li>
+          </ul>
+        </div>
+        <aside class="booking-card">
+          <div class="booking-top">
+            <div>
+              <span class="price-label">Weekend od</span>
+              <strong class="price">620 zł</strong>
+            </div>
+            <p class="js-state" id="js-state">Interakcje nieaktywne</p>
+          </div>
+          <button class="booking-button" id="book" type="button" aria-pressed="false">
+            <span id="book-label">Sprawdź termin</span>
+          </button>
+          <p class="booking-message" id="booking-message" aria-live="polite">Kliknij, aby sprawdzić najbliższy termin.</p>
+        </aside>
+      </section>
+    </main>
+    <script src="app.js"><\/script>
+  </body>
+</html>`;
 
     // ─── Helpers ───
     function selectedFiles() {
@@ -1164,67 +1966,447 @@
       return `<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:30px;box-sizing:border-box;text-align:center;background:#fff;color:#8b8f8c;font-family:system-ui,sans-serif"><div><div style="width:44px;height:44px;margin:0 auto 14px;border-radius:50%;border:2px dashed #d3d4d0"></div><h2 style="margin:0 0 7px;font-size:16px;color:#4c534f">${t("previewIdleTitle")}</h2><p style="max-width:300px;margin:0;font-size:13px;line-height:1.6">${t("previewIdleBody")}</p></div></body></html>`;
     }
 
-    function buildPreview(active) {
-      const has = file => active.includes(file);
+    function buildPreview(delivered) {
+      const has = file => delivered.includes(file);
       if (!has("html")) {
         return `<!doctype html><html><body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:30px;box-sizing:border-box;text-align:center;background:#fff;color:#717672;font-family:system-ui,sans-serif"><div><div style="font:700 54px/1 monospace;color:#d9dad7">404</div><h2 style="margin:12px 0 7px;color:#28332f">${t("preview404Title")}</h2><p style="max-width:300px;margin:0;font-size:13px;line-height:1.6">${t("preview404Body")}</p></div></body></html>`;
       }
 
-      const image = has("image")
-        ? `<img class="hero-image" src="${imageUri}" alt="Sunset over layered green mountains">`
-        : `<div class="image-placeholder">hero.svg was not requested</div>`;
-      const script = has("js") ? `<script>
-        let count = 0;
-        const button = document.getElementById('book');
-        const countNode = document.getElementById('count');
-        button.addEventListener('click', () => { count += 1; countNode.textContent = count; });
-        document.getElementById('theme').addEventListener('click', () => document.body.classList.toggle('night'));
-      <\/script>` : "";
-
-      return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">${has("css") ? `<style>${previewCss}</style>` : ""}</head>
-        <body><header><span class="logo">sunroom.</span><nav><span>Cabins</span><span>Journal</span><button id="theme" ${has("js") ? "" : "disabled"}>Theme</button></nav></header>
-        <main>${image}<div class="copy"><div><p class="eyebrow">Stay somewhere slower</p><h1>Room to breathe.</h1></div><div class="side"><p>Quiet cabins, warm light, and a whole lot of sky. Choose your weekend away.</p><button id="book" ${has("js") ? "" : "disabled"}>Save a cabin <span class="counter" id="count">0</span></button>${has("js") ? "" : `<p class="js-note">${t("previewJsNote")}</p>`}</div></div></main>${script}</body></html>`;
+      const externalScript = '<script src="app.js"><' + '/script>';
+      const inlineScript = '<script>\n' + previewJs + '\n<' + '/script>';
+      let documentHtml = previewHtml;
+      documentHtml = documentHtml.replace(
+        '<link rel="stylesheet" href="styles.css">',
+        has("css") ? `<style>\n${previewCss}\n    </style>` : ""
+      );
+      if (has("image")) {
+        documentHtml = documentHtml.replace('src="hero.svg"', `src="${imageUri}"`);
+      }
+      documentHtml = documentHtml.replace(externalScript, has("js") ? inlineScript : "");
+      return documentHtml;
     }
 
-    // ─── Render ───
-    function showBrowserStatus(active) {
-      const hasHtml = active.includes("html");
-      const linkedCount = Math.max(0, active.length - 1);
-      const total = active.reduce((sum, file) => sum + fileSizes[file], 0);
-
-      statusTitle.textContent = hasHtml ? t("statusAssembled") : t("statusNoDoc");
-      statusDetail.textContent = hasHtml
-        ? fmt(t("statusAssembledDetail"), { files: plural(active.length, t("fileForms")), kb: total })
-        : t("statusNoDocDetail");
-      paintState.textContent = hasHtml
-        ? linkedCount
-          ? fmt(t("paintLinked"), { res: plural(linkedCount, t("resForms")) })
-          : t("paintNoLinked")
-        : t("paintWaitingHtml");
+    function httpRequestCode(path, accept = "*/*") {
+      return `GET ${path} HTTP/2
+Host: polana.example
+Accept: ${accept}
+Accept-Language: pl
+Cache-Control: no-cache`;
     }
 
-    function renderBrowser(active) {
-      deliveredFiles = [...active];
-      files.forEach(file => {
-        const on = active.includes(file);
-        document.querySelector(`.resource-pill[data-file="${file}"]`).classList.toggle("is-off", !on);
+    function httpResponseCode(available, path, contentType, body) {
+      if (!available) {
+        return `HTTP/2 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Cache-Control: no-cache
+
+404 Not Found: ${path}`;
+      }
+      return `HTTP/2 200 OK
+Content-Type: ${contentType}
+Cache-Control: max-age=0
+
+${body}`;
+    }
+
+    function domTreeCode() {
+      return `${t("codeDomComment")}
+
+Document
+└─ html[lang="pl"]
+   ├─ head
+   │  ├─ title
+   │  └─ link[href="styles.css"]
+   └─ body
+      ├─ header.site-header
+      │  ├─ a.logo
+      │  ├─ nav
+      │  └─ button#theme
+      ├─ main
+      │  ├─ img[src="hero.svg"]
+      │  └─ section.content-grid
+      │     ├─ div.hero-copy
+      │     └─ aside.booking-card
+      └─ script[src="app.js"]`;
+    }
+
+    function renderPipelineCode(delivered, errors) {
+      const cssState = t(delivered.includes("css") ? "codeCssLoaded" : "codeCssMissing");
+      const jsState = t(delivered.includes("js") ? "codeJsLoaded" : "codeJsMissing");
+      const imageState = t(delivered.includes("image") ? "codeImageLoaded" : "codeImageMissing");
+      return `${t("codeRenderComment")}
+
+DOM
+ + ${cssState}
+ + ${jsState}
+ + ${imageState}
+        ↓
+${t("codeRenderStages")}
+
+200 OK: ${delivered.map(file => fileNames[file]).join(", ")}
+404: ${errors.length ? errors.map(file => fileNames[file]).join(", ") : t("timelineNone")}`;
+    }
+
+    function createTimelineEvents(available) {
+      const documentRequest = httpRequestCode("/", "text/html,application/xhtml+xml");
+      const events = [{
+        code: "URL",
+        title: t("timelineNavigateTitle"),
+        detail: t("timelineNavigateDetail"),
+        delivered: [],
+        responded: [],
+        request: "GET /",
+        response: "—",
+        paintKey: "paintConnecting",
+        sentCode: documentRequest,
+        receivedCode: t("codeWaiting")
+      }];
+
+      const htmlAvailable = available.includes("html");
+      events.push({
+        code: "HTML",
+        title: t(htmlAvailable ? "timelineHtmlOkTitle" : "timelineHtmlErrorTitle"),
+        detail: t(htmlAvailable ? "timelineHtmlOkDetail" : "timelineHtmlErrorDetail"),
+        delivered: htmlAvailable ? ["html"] : [],
+        responded: ["html"],
+        request: "GET /",
+        response: htmlAvailable ? "200 OK" : "404 Not Found",
+        paintKey: htmlAvailable ? "paintHtml" : "paintFailed",
+        file: "html",
+        error: !htmlAvailable,
+        sentCode: documentRequest,
+        receivedCode: httpResponseCode(htmlAvailable, "/", "text/html; charset=utf-8", previewHtml)
       });
-      preview.sandbox = active.includes("js") ? "allow-scripts" : "";
-      preview.srcdoc = buildPreview(active);
-      addressBar.textContent = "https://sunroom.studio";
-      showBrowserStatus(active);
+
+      if (!htmlAvailable) return events;
+
+      events.push({
+        code: "DOM",
+        title: t("timelineParseTitle"),
+        detail: t("timelineParseDetail"),
+        delivered: ["html"],
+        responded: ["html"],
+        request: "GET /",
+        response: "200 OK",
+        paintKey: "paintParsing",
+        sentCode: t("codeNoNetwork"),
+        receivedCode: domTreeCode()
+      });
+
+      const linkedRequests = [
+        httpRequestCode("/styles.css", "text/css,*/*;q=0.1"),
+        httpRequestCode("/app.js", "*/*"),
+        httpRequestCode("/hero.svg", "image/svg+xml,image/*,*/*;q=0.8")
+      ].join("\n\n──────────\n\n");
+      events.push({
+        code: "HTTP ×3",
+        title: t("timelineRequestsTitle"),
+        detail: t("timelineRequestsDetail"),
+        delivered: ["html"],
+        responded: ["html"],
+        request: "GET ×3",
+        response: "…",
+        paintKey: "paintRequesting",
+        sentCode: linkedRequests,
+        receivedCode: t("codeResponsesPending")
+      });
+
+      const resourceBodies = { css: previewCss, js: previewJs, image: imageSvg };
+      const resourceTypes = {
+        css: "text/css; charset=utf-8",
+        js: "text/javascript; charset=utf-8",
+        image: "image/svg+xml"
+      };
+      const resourceAccepts = {
+        css: "text/css,*/*;q=0.1",
+        js: "*/*",
+        image: "image/svg+xml,image/*,*/*;q=0.8"
+      };
+      let delivered = ["html"];
+      let responded = ["html"];
+      linkedFiles.forEach(file => {
+        const availableNow = available.includes(file);
+        responded = [...responded, file];
+        if (availableNow) delivered = [...delivered, file];
+        events.push({
+          code: file === "image" ? "SVG" : file.toUpperCase(),
+          title: fmt(t(availableNow ? "timelineResourceOkTitle" : "timelineResourceErrorTitle"), {
+            file: fileNames[file]
+          }),
+          detail: fmt(t(availableNow ? "timelineResourceOkDetail" : "timelineResourceErrorDetail"), {
+            file: fileNames[file],
+            kb: fileSizes[file]
+          }),
+          delivered: [...delivered],
+          responded: [...responded],
+          request: `GET /${fileNames[file]}`,
+          response: availableNow ? "200 OK" : "404 Not Found",
+          paintKey: "paintResource",
+          file,
+          error: !availableNow,
+          sentCode: httpRequestCode(`/${fileNames[file]}`, resourceAccepts[file]),
+          receivedCode: httpResponseCode(
+            availableNow,
+            `/${fileNames[file]}`,
+            resourceTypes[file],
+            resourceBodies[file]
+          )
+        });
+      });
+
+      const loadedNames = delivered.map(file => fileNames[file]).join(", ");
+      const errorNames = linkedFiles
+        .filter(file => !available.includes(file))
+        .map(file => fileNames[file])
+        .join(", ") || t("timelineNone");
+      const okCount = delivered.length;
+      const errorCount = files.length - delivered.length;
+      events.push({
+        code: "RENDER",
+        title: t("timelineRenderTitle"),
+        detail: fmt(t("timelineRenderDetail"), { loaded: loadedNames, errors: errorNames }),
+        delivered: [...delivered],
+        responded: [...files],
+        request: "GET ×3",
+        response: errorCount ? `${okCount}×200 · ${errorCount}×404` : "4×200 OK",
+        paintKey: "paintComplete",
+        sentCode: t("codeNoNetwork"),
+        receivedCode: renderPipelineCode(
+          delivered,
+          linkedFiles.filter(file => !available.includes(file))
+        )
+      });
+
+      return events;
     }
 
-    function renderIdle() {
+    function renderResourcePills(event) {
       files.forEach(file => {
-        document.querySelector(`.resource-pill[data-file="${file}"]`).classList.add("is-off");
+        const pill = document.querySelector(`.resource-pill[data-file="${file}"]`);
+        const responded = event?.responded.includes(file) || false;
+        const succeeded = responded && lastRequestedFiles.includes(file);
+        const state = !responded ? "Pending" : succeeded ? "Ok" : "Error";
+        const key = `pill${file === "image" ? "Image" : file[0].toUpperCase() + file.slice(1)}${state}`;
+        pill.dataset.i18n = key;
+        pill.textContent = t(key);
+        pill.classList.toggle("is-off", !responded);
+        pill.classList.toggle("is-error", responded && !succeeded);
       });
-      preview.sandbox = "";
-      preview.srcdoc = buildIdle();
-      addressBar.textContent = "about:blank";
-      statusTitle.textContent = t("statusReady");
-      statusDetail.textContent = t("statusReadyDetail");
-      paintState.textContent = t("paintIdle");
+    }
+
+    function renderPreviewState(event) {
+      const delivered = event?.delivered || [];
+      const navigationStarted = Boolean(event);
+      const documentResponded = event?.responded.includes("html") || false;
+      preview.sandbox = delivered.includes("js") ? "allow-scripts" : "";
+      preview.srcdoc = documentResponded ? buildPreview(delivered) : buildIdle();
+      addressBar.textContent = navigationStarted ? "https://polana.example" : "about:blank";
+    }
+
+    function renderTimelineList() {
+      if (timelineIndex < 0) {
+        const empty = document.createElement("li");
+        empty.className = "timeline-empty";
+        empty.textContent = t("timelineEmpty");
+        timelineList.replaceChildren(empty);
+        return;
+      }
+
+      const items = timelineEvents.slice(0, timelineIndex + 1).map((event, index) => {
+        const item = document.createElement("li");
+        item.className = "timeline-event";
+        item.setAttribute("role", "button");
+        item.tabIndex = 0;
+        item.setAttribute("aria-pressed", String(index === timelineSelectedIndex));
+        item.setAttribute("aria-label", event.title);
+        item.classList.toggle("is-current", index === timelineIndex);
+        item.classList.toggle("is-selected", index === timelineSelectedIndex);
+        item.classList.toggle("is-error", Boolean(event.error));
+        item.addEventListener("click", () => selectTimelineEvent(index));
+        item.addEventListener("keydown", keyEvent => {
+          if (keyEvent.key !== "Enter" && keyEvent.key !== " ") return;
+          keyEvent.preventDefault();
+          selectTimelineEvent(index);
+        });
+
+        const code = document.createElement("span");
+        code.className = "timeline-code";
+        code.textContent = event.code;
+
+        const marker = document.createElement("span");
+        marker.className = "timeline-marker";
+        marker.setAttribute("aria-hidden", "true");
+
+        const copy = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = event.title;
+        const detail = document.createElement("p");
+        detail.textContent = event.detail;
+        copy.append(title, detail);
+        item.append(code, marker, copy);
+        return item;
+      });
+      timelineList.replaceChildren(...items);
+    }
+
+    function renderExchange() {
+      const event = timelineSelectedIndex >= 0 && timelineSelectedIndex <= timelineIndex
+        ? timelineEvents[timelineSelectedIndex]
+        : null;
+      timelineExchange.hidden = !event;
+      if (!event) return;
+      exchangeStep.textContent = event.code;
+      exchangeTitle.textContent = event.title;
+      exchangeSentCode.textContent = event.sentCode;
+      exchangeReceivedCode.textContent = event.receivedCode;
+    }
+
+    function selectTimelineEvent(index) {
+      if (index < 0 || index > timelineIndex) return;
+      pauseTimeline();
+      timelineSelectedIndex = index;
+      renderTimelineList();
+      renderExchange();
+    }
+
+    function renderControls() {
+      const hasEvents = timelineEvents.length > 0;
+      timelinePrev.disabled = !hasEvents || timelineIndex < 0;
+      timelineNext.disabled = !hasEvents || timelineIndex >= timelineEvents.length - 1;
+      timelinePlay.disabled = !hasEvents;
+      timelineReset.disabled = !hasEvents || timelineIndex < 0;
+      timelinePlayLabel.textContent = t(isPlaying ? "timelinePause" : "timelinePlay");
+      timelinePlayIcon.textContent = isPlaying ? "Ⅱ" : "▶";
+      timelinePlay.setAttribute("aria-label", t(isPlaying ? "timelinePause" : "timelinePlay"));
+      timelineProgress.textContent = hasEvents
+        ? fmt(t("timelineProgress"), {
+            current: Math.max(0, timelineIndex + 1),
+            total: timelineEvents.length
+          })
+        : "";
+    }
+
+    function renderTimelineState() {
+      document.querySelectorAll(".packet").forEach(packet => {
+        packet.classList.remove("fly", "is-error");
+      });
+
+      const event = timelineIndex >= 0 ? timelineEvents[timelineIndex] : null;
+      if (timelineSelectedIndex > timelineIndex) timelineSelectedIndex = timelineIndex;
+      renderTimelineList();
+      renderExchange();
+      renderResourcePills(event);
+      renderPreviewState(event);
+      renderControls();
+
+      if (!event) {
+        statusTitle.textContent = t("statusReady");
+        statusDetail.textContent = t("statusReadyDetail");
+        paintState.textContent = t("paintIdle");
+        requestLine.dataset.request = "GET /";
+        requestLine.dataset.response = "—";
+        return;
+      }
+
+      statusTitle.textContent = event.title;
+      statusDetail.textContent = event.detail;
+      paintState.textContent = t(event.paintKey);
+      requestLine.dataset.request = event.request;
+      requestLine.dataset.response = event.response;
+    }
+
+    function animateEvent(event) {
+      if (!event.file) return;
+      const packet = document.querySelector(`.packet[data-file="${event.file}"]`);
+      packet.classList.toggle("is-error", Boolean(event.error));
+      void packet.offsetWidth;
+      packet.classList.add("fly");
+    }
+
+    function pauseTimeline() {
+      if (timelineTimer) clearInterval(timelineTimer);
+      timelineTimer = null;
+      isPlaying = false;
+      status.classList.remove("loading");
+      renderControls();
+    }
+
+    function advanceTimeline() {
+      if (!timelineEvents.length || timelineIndex >= timelineEvents.length - 1) {
+        pauseTimeline();
+        return;
+      }
+      timelineIndex += 1;
+      timelineSelectedIndex = timelineIndex;
+      renderTimelineState();
+      animateEvent(timelineEvents[timelineIndex]);
+      if (timelineIndex >= timelineEvents.length - 1) pauseTimeline();
+    }
+
+    function playTimeline() {
+      if (!timelineEvents.length) return;
+      if (isPlaying) {
+        pauseTimeline();
+        return;
+      }
+      if (timelineIndex >= timelineEvents.length - 1) {
+        timelineIndex = -1;
+        timelineSelectedIndex = -1;
+        renderTimelineState();
+      }
+      isPlaying = true;
+      status.classList.add("loading");
+      renderControls();
+      advanceTimeline();
+      if (isPlaying) timelineTimer = setInterval(advanceTimeline, 1700);
+    }
+
+    function previousTimelineStep() {
+      pauseTimeline();
+      if (timelineIndex < 0) return;
+      timelineIndex -= 1;
+      timelineSelectedIndex = timelineIndex;
+      renderTimelineState();
+    }
+
+    function nextTimelineStep() {
+      pauseTimeline();
+      advanceTimeline();
+    }
+
+    function resetTimeline() {
+      pauseTimeline();
+      timelineIndex = -1;
+      timelineSelectedIndex = -1;
+      renderTimelineState();
+    }
+
+    function updateRequestButton() {
+      requestLabel.textContent = t(hasRequested ? "btnReload" : "btnRequest");
+      requestButton.setAttribute("aria-label", t(hasRequested ? "btnReloadAria" : "btnRequestAria"));
+    }
+
+    function loadCurrentScenario(animate) {
+      pauseTimeline();
+      hasRequested = true;
+      lastRequestedFiles = selectedFiles();
+      timelineEvents = createTimelineEvents(lastRequestedFiles);
+      timelineIndex = animate ? -1 : timelineEvents.length - 1;
+      timelineSelectedIndex = timelineIndex;
+      updateRequestButton();
+      renderTimelineState();
+      if (animate) playTimeline();
+    }
+
+    function sendRequest() {
+      if (autoReloadTimer) clearTimeout(autoReloadTimer);
+      autoReloadTimer = null;
+      loadCurrentScenario(true);
+    }
+
+    function reloadAutomatically() {
+      autoReloadTimer = null;
+      loadCurrentScenario(false);
     }
 
     function updateServerUI() {
@@ -1233,69 +2415,20 @@
         document.querySelector(`.file-toggle[data-file="${file}"]`).classList.toggle("is-off", !pending.includes(file));
       });
 
-      if (!hasRequested) {
-        statusTitle.textContent = t("statusReady");
-        statusDetail.textContent = t("statusReadyDetail");
+      if (!hasRequested) return;
+      if (autoReloadTimer) clearTimeout(autoReloadTimer);
+      autoReloadTimer = null;
+
+      if (sameFiles(pending, lastRequestedFiles)) {
+        renderTimelineState();
         return;
       }
 
-      if (sameFiles(pending, lastRequestedFiles)) {
-        showBrowserStatus(deliveredFiles);
-      } else {
-        statusTitle.textContent = t("statusChanged");
-        statusDetail.textContent = t("statusChangedDetail");
-      }
-    }
-
-    function clearTimers() {
-      requestTimers.forEach(clearTimeout);
-      requestTimers = [];
-      document.querySelectorAll(".packet").forEach(packet => packet.classList.remove("fly"));
-    }
-
-    function sendRequest() {
-      clearTimers();
-      hasRequested = true;
-      const requested = selectedFiles();
-      const hasHtml = requested.includes("html");
-      const delivered = hasHtml ? [...requested] : [];
-      const transfers = hasHtml ? ["html", ...requested.filter(file => file !== "html")] : [];
+      pauseTimeline();
+      statusTitle.textContent = t("statusChanged");
+      statusDetail.textContent = t("statusChangedDetail");
       status.classList.add("loading");
-      statusTitle.textContent = t("statusRequesting");
-      statusDetail.textContent = t("statusRequestingDetail");
-      preview.style.opacity = ".55";
-
-      transfers.forEach((file, index) => {
-        const delay = index === 0 ? 260 : 700 + (index - 1) * 100;
-        const timer = setTimeout(() => {
-          const packet = document.querySelector(`.packet[data-file="${file}"]`);
-          packet.classList.remove("fly");
-          void packet.offsetWidth;
-          packet.classList.add("fly");
-          statusTitle.textContent = fmt(t("statusTransferring"), { file: fileNames[file] });
-          statusDetail.textContent = index === 0
-            ? t("statusFirstOk")
-            : fmt(t("statusLinkedOk"), { i: index, total: transfers.length - 1 });
-        }, delay);
-        requestTimers.push(timer);
-      });
-
-      if (!hasHtml) {
-        const missingDocument = setTimeout(() => {
-          statusTitle.textContent = t("statusNotFound");
-          statusDetail.textContent = t("statusNotFoundDetail");
-        }, 450);
-        requestTimers.push(missingDocument);
-      }
-
-      const finish = setTimeout(() => {
-        lastRequestedFiles = [...requested];
-        renderBrowser(delivered);
-        updateServerUI();
-        status.classList.remove("loading");
-        preview.style.opacity = "1";
-      }, hasHtml ? Math.max(1600, 2050 + (transfers.length - 2) * 100) : 900);
-      requestTimers.push(finish);
+      autoReloadTimer = setTimeout(reloadAutomatically, 120);
     }
 
     // ─── Language ───
@@ -1306,25 +2439,39 @@
       document.title = t("docTitle");
       document.querySelector('meta[name="description"]').setAttribute("content", t("metaDesc"));
       document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
-      requestButton.setAttribute("aria-label", t("btnRequestAria"));
+      document.querySelectorAll("[data-i18n-aria-label]").forEach(el => {
+        el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
+      });
+      document.querySelectorAll("[data-i18n-title]").forEach(el => {
+        el.setAttribute("title", t(el.dataset.i18nTitle));
+      });
+      updateRequestButton();
       langButtons.forEach(btn => btn.setAttribute("aria-pressed", String(btn.dataset.lang === lang)));
 
       if (!hasRequested) {
-        renderIdle();
+        timelineEvents = [];
+        timelineIndex = -1;
+        timelineSelectedIndex = -1;
+        renderTimelineState();
       } else {
-        if (!deliveredFiles.includes("html") || !deliveredFiles.includes("js")) {
-          preview.srcdoc = buildPreview(deliveredFiles);
+        pauseTimeline();
+        timelineEvents = createTimelineEvents(lastRequestedFiles);
+        timelineIndex = Math.min(timelineIndex, timelineEvents.length - 1);
+        timelineSelectedIndex = Math.min(timelineSelectedIndex, timelineIndex);
+        renderTimelineState();
+        if (!sameFiles(selectedFiles(), lastRequestedFiles)) {
+          statusTitle.textContent = t("statusChanged");
+          statusDetail.textContent = t("statusChangedDetail");
         }
-        updateServerUI();
       }
     }
 
     // ─── Source inspector ───
     const sourceCode = {
-      html: `<!doctype html>\n<html>\n  <head>\n    <link rel="stylesheet" href="styles.css">\n  </head>\n  <body>\n    <h1>Room to breathe.</h1>\n    <img src="hero.svg" alt="Mountain sunset">\n    <button id="book">\n      Save a cabin <span id="count">0</span>\n    </button>\n    <script src="app.js"><\/script>\n  </body>\n</html>`,
-      css: `body {\n  background: #f7f2e8;\n  color: #193831;\n  font-family: Arial, sans-serif;\n}\n\nh1 {\n  font-size: 4rem;\n  letter-spacing: -0.06em;\n}\n\n.hero-image {\n  width: 100%;\n  border-radius: 18px;\n}`,
-      js: `let saved = 0;\nconst button = document.querySelector('#book');\nconst count = document.querySelector('#count');\n\nbutton.addEventListener('click', () => {\n  saved += 1;\n  count.textContent = saved;\n});`,
-      image: `<svg viewBox="0 0 900 520">\n  <circle class="sun" cx="720" cy="105" r="64" />\n  <path class="hill" d="M0 420 205 230l125 122 110-106 260 274H0Z" />\n  <path class="mountain" d="m160 520 350-330 390 330Z" />\n</svg>`
+      html: previewHtml,
+      css: previewCss,
+      js: previewJs,
+      image: imageSvg
     };
 
     const codeContent = document.getElementById("codeContent");
@@ -1344,6 +2491,10 @@
     // ─── Listeners ───
     document.getElementById("serverRack").addEventListener("change", updateServerUI);
     requestButton.addEventListener("click", sendRequest);
+    timelinePrev.addEventListener("click", previousTimelineStep);
+    timelinePlay.addEventListener("click", playTimeline);
+    timelineNext.addEventListener("click", nextTimelineStep);
+    timelineReset.addEventListener("click", resetTimeline);
 
     function setPreset(active) {
       files.forEach(file => { inputs[file].checked = active.includes(file); });

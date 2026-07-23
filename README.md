@@ -1,8 +1,15 @@
-# Web Anatomy
+# How a browser loads a web page
 
-An interactive educational website showing how separate files travel from a web server and are assembled by a browser.
+An interactive educational website showing how a browser moves from a URL and
+HTTP responses to parsing, resource discovery, layout, and paint.
 
-The lab lets a learner independently enable or disable HTML, CSS, JavaScript, and image resources, replay the HTTP delivery, inspect the resulting page, and read each file's source.
+The lab lets a learner control whether the server returns `200` or `404` for
+HTML, CSS, JavaScript, and an image; inspect a step-by-step loading log; replay
+or step through the sequence; compare the rendered result; and read the exact
+source of every simulated resource. After the first manual load, changing any
+resource updates the preview and log automatically. Each completed log entry is
+clickable and reveals the HTTP request, response body, or local processing
+result for that step.
 
 ## Run locally
 
