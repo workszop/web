@@ -4,62 +4,64 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Interaktywna symulacja pokazująca, jak przeglądarka przechodzi od adresu URL i odpowiedzi HTTP do DOM, CSSOM, układu i gotowego widoku.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23211E1A'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%23EF5B3F'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%232E78C9'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23E8920C'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%237A5AC2'/%3E%3C/svg%3E">
-  <title>Jak przeglądarka ładuje stronę WWW — interaktywny przewodnik</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231C1917'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%23E5322D'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%231E8FC2'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23FFD500'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%237A5AC2'/%3E%3C/svg%3E">
+  <title>Jak przeglądarka ładuje stronę WWW – interaktywny przewodnik</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
 
     /* ─── edulab design tokens (source: edustyl tokens/colors_and_type.css) ─── */
     :root {
-      --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
-      --font-sans: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
-      --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+      --font-display: 'Outfit', 'IBM Plex Sans', system-ui, sans-serif;
+      --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-      --paper: #FBF7F0;
-      --paper-2: #F4EDDF;
-      --paper-3: #ECE1CF;
+      --paper: #FFFFFF;
+      --paper-2: #FBF7E6;
+      --paper-3: #F5EDCB;
       --surface: #FFFFFF;
-      --ink: #211E1A;
-      --ink-2: #5B554D;
-      --ink-3: #938A7C;
-      --line: #E7DCCB;
-      --line-2: #D6C8B2;
+      --ink: #1C1917;
+      --ink-2: #57534E;
+      --ink-3: #948C82;
+      --line: #EDE7D2;
+      --line-2: #DDD4B6;
 
-      --marigold: #E8920C;
-      --marigold-600: #CE800A;
-      --marigold-soft: #FBE7C2;
-      --marigold-ink: #8A4F00;
-      --on-primary: #FFFFFF;
-      --teal: #0E8C7F;
-      --teal-soft: #D2EBE6;
-      --teal-ink: #0A5A52;
-      --coral: #EF5B3F;
-      --sky: #2E78C9;
+      --yellow: #FFD500; --yellow-600: #F0C800; --yellow-soft: #FFD500; --yellow-ink: #1C1917;
+      --blue: #1E8FC2;   --blue-600: #177AA8;   --blue-soft: #1E8FC2;   --blue-ink: #FFFFFF;
+      --green: #00A651;  --green-600: #009444;  --green-soft: #00A651;  --green-ink: #FFFFFF;
+      --red: #E5322D;    --red-600: #C92823;    --red-soft: #E5322D;    --red-ink: #FFFFFF;
+
+      /* Legacy role aliases kept so older selectors resolve */
+      --marigold: var(--yellow); --marigold-600: var(--yellow-600);
+      --marigold-soft: var(--yellow-soft); --marigold-ink: var(--yellow-ink);
+      --teal: var(--blue); --teal-soft: var(--blue-soft); --teal-ink: var(--blue-ink);
+      --sky: var(--green); --coral: var(--red);
       --play-grape: #7A5AC2;
-      --success: #2F8F5B;
-      --error: #C7463A;
-      --error-soft: #F9DDD8;
+
+      --primary: var(--yellow);
+      --on-primary: #1C1917;
+      --success: var(--green); --error: var(--red); --error-soft: var(--red);
 
       --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
       --shadow-sm: 0 1px 2px rgba(33, 30, 26, .06), 0 1px 1px rgba(33, 30, 26, .04);
       --shadow-md: 0 4px 16px rgba(33, 30, 26, .08), 0 1px 3px rgba(33, 30, 26, .05);
       --shadow-lg: 0 16px 40px rgba(33, 30, 26, .12), 0 3px 8px rgba(33, 30, 26, .06);
-      --shadow-marigold: 0 8px 22px rgba(232, 146, 12, .28);
-      --focus-ring-color: rgba(232, 146, 12, .45);
+      --shadow-primary: 0 8px 22px color-mix(in srgb, var(--yellow) 30%, transparent);
+      --shadow-marigold: var(--shadow-primary);
+      --focus-ring-color: color-mix(in srgb, var(--yellow) 55%, transparent);
 
-      /* ─── App mapping: file types on the edulab play palette ─── */
-      --html: var(--coral);
-      --css: var(--sky);
-      --js: var(--marigold);
-      --image: var(--play-grape);
+      /* ─── App mapping: file types on the edulab palette ─── */
+      --html: var(--red);         --html-ink: var(--red-ink);
+      --css: var(--blue);         --css-ink: var(--blue-ink);
+      --js: var(--yellow);        --js-ink: var(--yellow-ink);
+      --image: var(--play-grape); --image-ink: #FFFFFF;
 
-      /* ─── Dark data panel (server, code window) — edulab ink family ─── */
-      --dark-well: #17140F;
-      --dark-card: #2C2820;
-      --dark-line: rgba(251, 247, 240, .14);
-      --dark-line-strong: rgba(251, 247, 240, .32);
-      --dark-muted: #A79D8C;
-      --dark-control: #5D554A;
+      /* ─── Dark data panel (server, code window) – edulab ink family ─── */
+      --dark-well: #100E0D;
+      --dark-card: #2A2724;
+      --dark-line: rgba(255, 255, 255, .14);
+      --dark-line-strong: rgba(255, 255, 255, .32);
+      --dark-muted: #A9A29A;
+      --dark-control: #5A544E;
     }
 
     * { box-sizing: border-box; }
@@ -69,10 +71,7 @@
     body {
       margin: 0;
       color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 8%, rgba(232, 146, 12, .10), transparent 24rem),
-        radial-gradient(circle at 95% 30%, rgba(14, 140, 127, .08), transparent 26rem),
-        var(--paper);
+      background: var(--paper);
       font-family: var(--font-sans);
       min-height: 100vh;
     }
@@ -91,7 +90,7 @@
       top: 0;
       z-index: 20;
       border-bottom: 1px solid var(--line);
-      background: rgba(251, 247, 240, .85);
+      background: rgba(255, 255, 255, .85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
@@ -116,7 +115,7 @@
       gap: 10px;
     }
 
-    .edu-logo { width: 32px; height: 32px; display: block; }
+    .edu-logo { width: 64px; height: 64px; display: block; margin-right: -6px; }
 
     .edu-wordmark {
       color: var(--ink);
@@ -126,41 +125,25 @@
       letter-spacing: -.02em;
     }
 
-    .edu-tag {
-      padding: 4px 9px;
-      border-radius: var(--r-pill);
-      color: var(--teal-ink);
-      background: var(--teal-soft);
-      font: 500 11px/1 var(--font-mono);
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
     .topbar-right {
       display: flex;
       align-items: center;
       gap: 14px;
     }
 
-    .lab-label {
-      color: var(--ink-3);
-      font: 500 11px/1 var(--font-mono);
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-
     .lang-switch {
-      display: flex;
-      overflow: hidden;
-      border: 1px solid var(--line-2);
+      display: inline-flex;
+      gap: 2px;
+      padding: 3px;
       border-radius: var(--r-pill);
-      background: var(--surface);
+      background: var(--paper-2);
     }
 
     .lang-btn {
       border: 0;
-      padding: 6px 11px;
-      color: var(--ink-3);
+      padding: 7px 13px;
+      border-radius: var(--r-pill);
+      color: var(--ink-2);
       background: transparent;
       font: 500 11px/1 var(--font-mono);
       letter-spacing: .08em;
@@ -168,34 +151,16 @@
       transition: background .16s ease, color .16s ease;
     }
 
+    .lang-btn:hover { color: var(--ink); }
+
     .lang-btn[aria-pressed="true"] {
-      color: var(--paper);
-      background: var(--ink);
+      color: var(--yellow-ink);
+      background: var(--yellow);
     }
 
     .hero {
       padding: 64px 0 44px;
       text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0 0 16px;
-      color: var(--marigold-ink);
-      font: 500 12px/1 var(--font-mono);
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--marigold);
-      box-shadow: 0 0 0 5px rgba(232, 146, 12, .16);
     }
 
     h1 {
@@ -210,7 +175,6 @@
     }
 
     .hero-copy {
-      max-width: 36rem;
       margin: 18px auto 0;
       color: var(--ink-2);
       font-size: clamp(1rem, 1.5vw, 1.125rem);
@@ -218,17 +182,18 @@
     }
 
     .hero-note {
-      max-width: 38rem;
+      max-width: 46rem;
       margin: 26px auto 0;
-      padding: 12px 20px;
+      padding: 16px 22px;
       border-radius: var(--r-lg);
-      color: var(--teal-ink);
-      background: var(--teal-soft);
+      color: var(--blue-ink);
+      background: var(--blue-soft);
       font-size: 14px;
       line-height: 1.55;
     }
 
-    .hero-note strong { color: var(--teal-ink); }
+    .hero-note strong,
+    .hero-note span { color: inherit; }
 
     .lab {
       overflow: hidden;
@@ -262,7 +227,7 @@
       flex: none;
       border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 0 5px rgba(47, 143, 91, .12);
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--green) 16%, transparent);
       transition: background .2s ease;
     }
 
@@ -304,7 +269,7 @@
     .request-btn kbd {
       padding: 2px 6px;
       border-radius: 5px;
-      background: rgba(255, 255, 255, .22);
+      background: rgba(28, 25, 23, .14);
       font: 500 10px/1 var(--font-mono);
     }
 
@@ -364,6 +329,7 @@
 
     .file-toggle {
       --file-color: var(--html);
+      --file-ink: var(--html-ink);
       min-height: 84px;
       display: grid;
       grid-template-columns: auto 1fr auto;
@@ -380,9 +346,9 @@
 
     .file-toggle:last-child { margin-bottom: 0; }
     .file-toggle:hover { border-color: var(--dark-line-strong); }
-    .file-toggle[data-file="css"] { --file-color: var(--css); }
-    .file-toggle[data-file="js"] { --file-color: var(--js); }
-    .file-toggle[data-file="image"] { --file-color: var(--image); }
+    .file-toggle[data-file="css"] { --file-color: var(--css); --file-ink: var(--css-ink); }
+    .file-toggle[data-file="js"] { --file-color: var(--js); --file-ink: var(--js-ink); }
+    .file-toggle[data-file="image"] { --file-color: var(--image); --file-ink: var(--image-ink); }
     .file-toggle.is-off { opacity: .43; }
 
     .file-toggle input {
@@ -405,7 +371,7 @@
       place-items: center;
       position: relative;
       border-radius: 5px 9px 5px 5px;
-      color: var(--on-primary);
+      color: var(--file-ink);
       background: var(--file-color);
       font: 500 9px/1 var(--font-mono);
       box-shadow: var(--shadow-sm);
@@ -418,7 +384,7 @@
       right: 0;
       border-style: solid;
       border-width: 0 9px 9px 0;
-      border-color: transparent rgba(255, 255, 255, .52) transparent transparent;
+      border-color: transparent rgba(255, 255, 255, .45) transparent transparent;
     }
 
     .file-meta { min-width: 0; }
@@ -442,7 +408,7 @@
       top: 3px;
       left: 3px;
       border-radius: 50%;
-      background: var(--on-primary);
+      background: var(--surface);
       transition: transform .18s ease;
     }
 
@@ -531,6 +497,7 @@
 
     .packet {
       --packet-color: var(--html);
+      --packet-ink: var(--html-ink);
       width: 44px;
       height: 25px;
       position: absolute;
@@ -540,7 +507,7 @@
       place-items: center;
       border: 2px solid var(--paper-2);
       border-radius: 5px;
-      color: var(--on-primary);
+      color: var(--packet-ink);
       background: var(--packet-color);
       box-shadow: var(--shadow-sm);
       font: 500 8px/1 var(--font-mono);
@@ -548,10 +515,10 @@
       transform: translate(-50%, -50%);
     }
 
-    .packet[data-file="css"] { --packet-color: var(--css); }
-    .packet[data-file="js"] { --packet-color: var(--js); }
-    .packet[data-file="image"] { --packet-color: var(--image); }
-    .packet.is-error { --packet-color: var(--error); }
+    .packet[data-file="css"] { --packet-color: var(--css); --packet-ink: var(--css-ink); }
+    .packet[data-file="js"] { --packet-color: var(--js); --packet-ink: var(--js-ink); }
+    .packet[data-file="image"] { --packet-color: var(--image); --packet-ink: var(--image-ink); }
+    .packet.is-error { --packet-color: var(--red); --packet-ink: var(--red-ink); }
     .packet.fly { animation: deliver 1.25s cubic-bezier(.32, .72, .25, 1) forwards; }
 
     .browser-panel {
@@ -657,10 +624,10 @@
     .resource-pill[data-file="image"] { --pill-color: var(--image); }
     .resource-pill.is-off { opacity: .3; text-decoration: line-through; }
     .resource-pill.is-error {
-      --pill-color: var(--error);
-      border-color: rgba(199, 70, 58, .28);
-      color: var(--error);
-      background: var(--error-soft);
+      --pill-color: var(--red-ink);
+      border-color: var(--red);
+      color: var(--red-ink);
+      background: var(--red);
       text-decoration: none;
       opacity: 1;
     }
@@ -724,7 +691,8 @@
 
     .timeline-btn:hover:not(:disabled) {
       color: var(--ink);
-      border-color: var(--marigold);
+      background: var(--paper-2);
+      border-color: var(--line-2);
     }
 
     .timeline-btn:disabled {
@@ -734,9 +702,15 @@
 
     .timeline-btn.primary {
       min-width: 92px;
-      color: var(--on-primary);
-      border-color: var(--ink);
-      background: var(--ink);
+      color: var(--yellow-ink);
+      border-color: var(--yellow);
+      background: var(--yellow);
+    }
+
+    .timeline-btn.primary:hover:not(:disabled) {
+      color: var(--yellow-ink);
+      border-color: var(--yellow-600);
+      background: var(--yellow-600);
     }
 
     .timeline-progress {
@@ -777,7 +751,7 @@
       border: 1px solid var(--line);
       border-radius: var(--r-sm);
       color: inherit;
-      background: rgba(255, 255, 255, .65);
+      background: var(--surface);
       font: inherit;
       text-align: left;
       cursor: pointer;
@@ -791,20 +765,23 @@
     }
 
     .timeline-event.is-current {
-      border-color: rgba(232, 146, 12, .55);
+      border-color: var(--yellow);
       background: var(--surface);
       box-shadow: var(--shadow-sm);
     }
 
     .timeline-event.is-selected {
-      border-color: var(--teal);
-      background: rgba(210, 235, 230, .42);
+      border-color: var(--blue);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
     }
 
     .timeline-event.is-error {
-      border-color: rgba(199, 70, 58, .25);
-      background: rgba(249, 221, 216, .45);
+      border-color: var(--red);
+      background: var(--surface);
     }
+
+    .timeline-event.is-error strong { color: var(--red); }
 
     .timeline-code {
       padding-top: 3px;
@@ -819,18 +796,18 @@
       margin-top: 4px;
       border: 2px solid var(--surface);
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 1px rgba(47, 143, 91, .35);
+      background: var(--green);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
     }
 
     .timeline-event.is-current .timeline-marker {
-      background: var(--marigold);
-      box-shadow: 0 0 0 3px rgba(232, 146, 12, .14);
+      background: var(--yellow);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 30%, transparent);
     }
 
     .timeline-event.is-error .timeline-marker {
-      background: var(--error);
-      box-shadow: 0 0 0 1px rgba(199, 70, 58, .35);
+      background: var(--red);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--red) 40%, transparent);
     }
 
     .timeline-event strong {
@@ -966,6 +943,7 @@
 
     .code-tab {
       --tab-color: var(--html);
+      --tab-ink: var(--html-ink);
       border: 1px solid var(--line-2);
       border-radius: var(--r-pill);
       padding: 7px 10px;
@@ -976,10 +954,10 @@
       transition: background .16s ease, color .16s ease, border-color .16s ease;
     }
 
-    .code-tab[data-file="css"] { --tab-color: var(--css); }
-    .code-tab[data-file="js"] { --tab-color: var(--js); }
-    .code-tab[data-file="image"] { --tab-color: var(--image); }
-    .code-tab[aria-selected="true"] { color: var(--on-primary); background: var(--tab-color); border-color: var(--tab-color); }
+    .code-tab[data-file="css"] { --tab-color: var(--css); --tab-ink: var(--css-ink); }
+    .code-tab[data-file="js"] { --tab-color: var(--js); --tab-ink: var(--js-ink); }
+    .code-tab[data-file="image"] { --tab-color: var(--image); --tab-ink: var(--image-ink); }
+    .code-tab[aria-selected="true"] { color: var(--tab-ink); background: var(--tab-color); border-color: var(--tab-color); }
 
     .code-window {
       min-width: 0;
@@ -1012,7 +990,7 @@
     }
 
     @keyframes pulse {
-      50% { transform: scale(.78); box-shadow: 0 0 0 9px rgba(232, 146, 12, .08); }
+      50% { transform: scale(.78); box-shadow: 0 0 0 9px color-mix(in srgb, var(--yellow) 22%, transparent); }
     }
 
     @media (min-width: 901px) {
@@ -1049,7 +1027,6 @@
 
     @media (max-width: 680px) {
       .topbar-inner, .page { width: min(100% - 24px, 1100px); }
-      .lab-label { display: none; }
       .edu-wordmark { font-size: 19px; }
       .hero { padding: 44px 0 30px; }
       h1 { font-size: clamp(2.3rem, 11vw, 3.4rem); }
@@ -1091,12 +1068,10 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img class="edu-logo" src="data:image/png;base64,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" alt="edulab">
+        <img class="edu-logo" src="data:image/png;base64,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" alt="edulab">
         <span class="edu-wordmark">edulab</span>
-        <span class="edu-tag">demo lab</span>
       </div>
       <div class="topbar-right">
-        <span class="lab-label" data-i18n="labLabel">jak działa przeglądarka · 01</span>
         <div class="lang-switch" role="group" aria-label="Język / Language">
           <button class="lang-btn" type="button" data-lang="pl" aria-pressed="true">PL</button>
           <button class="lang-btn" type="button" data-lang="en" aria-pressed="false">EN</button>
@@ -1107,7 +1082,6 @@
 
   <main class="page">
     <section class="hero" aria-labelledby="page-title">
-      <p class="eyebrow" data-i18n="eyebrow">Od adresu URL do pikseli</p>
       <h1 id="page-title" data-i18n="title">Jak przeglądarka ładuje stronę WWW?</h1>
       <p class="hero-copy" data-i18n="lead"></p>
       <aside class="hero-note"><strong data-i18n="noteLabel"></strong> <span data-i18n="noteBody"></span></aside>
@@ -1172,7 +1146,7 @@
 
         <section class="network-panel" aria-label="Żądania i odpowiedzi przez internet" data-i18n-aria-label="networkAria">
           <span class="network-label">02 · Internet<br><span data-i18n="networkSub"></span></span>
-          <div class="request-line" id="requestLine" data-request="GET /" data-response="—" aria-hidden="true">
+          <div class="request-line" id="requestLine" data-request="GET /" data-response="–" aria-hidden="true">
             <span class="direction up">⌃</span>
             <span class="direction down">⌄</span>
             <span class="packet" data-file="html">HTML</span>
@@ -1275,14 +1249,12 @@
     // ─── Translations ───
     const T = {
       pl: {
-        docTitle: "Jak przeglądarka ładuje stronę WWW — interaktywny przewodnik",
+        docTitle: "Jak przeglądarka ładuje stronę WWW – interaktywny przewodnik",
         metaDesc: "Interaktywna symulacja pokazująca, jak przeglądarka przechodzi od adresu URL i odpowiedzi HTTP do DOM, CSSOM, układu i gotowego widoku.",
-        labLabel: "jak działa przeglądarka · 01",
-        eyebrow: "Od adresu URL do pikseli",
         title: "Jak przeglądarka ładuje stronę WWW?",
-        lead: "Po przejściu pod adres URL przeglądarka pobiera dokument HTML, odczytuje jego kod, dociąga wskazane zasoby i przetwarza je w widok, z którym można wejść w interakcję.",
+        lead: "Po wejściu pod adres URL przeglądarka pobiera dokument HTML, czyta jego kod, dociąga wskazane w nim zasoby i składa z tego widok, z którym można już pracować.",
         noteLabel: "Sprawdź w praktyce:",
-        noteBody: "załaduj stronę ręcznie tylko za pierwszym razem. Potem przełączaj zasoby — podgląd i dziennik zaktualizują się automatycznie po każdej zmianie.",
+        noteBody: "załaduj stronę ręcznie tylko za pierwszym razem. Potem wystarczy przełączać zasoby: podgląd i dziennik same się zaktualizują.",
         btnRequest: "Załaduj stronę",
         btnReload: "Załaduj ponownie",
         btnRequestAria: "Załaduj stronę (skrót: R)",
@@ -1313,22 +1285,22 @@
         pillJsError: "JavaScript · 404",
         pillImageError: "SVG · 404",
         step1t: "Nawigacja zaczyna się od URL",
-        step1p: "Przeglądarka ustala, dokąd wysłać żądanie — korzystając z DNS, jeśli adres nie jest już znany — nawiązuje połączenie i prosi serwer o dokument.",
+        step1p: "Przeglądarka ustala, dokąd wysłać żądanie. Jeśli nie zna jeszcze adresu, pyta o niego DNS. Potem nawiązuje połączenie i prosi serwer o dokument.",
         step2t: "HTML uruchamia kolejne pobrania",
-        step2p: "Serwer zwraca odpowiedź HTTP. Gdy docierają kolejne bajty HTML, parser buduje DOM, a odwołania do arkuszy CSS, skryptów i obrazów uruchamiają następne żądania, chyba że zasób jest już w pamięci podręcznej.",
+        step2p: "Serwer zwraca odpowiedź HTTP. Gdy docierają kolejne bajty HTML, parser buduje DOM. Odwołania do arkuszy CSS, skryptów i obrazów uruchamiają następne żądania, chyba że zasób jest już w pamięci podręcznej.",
         step3t: "Silnik renderujący tworzy widok",
-        step3p: "Przeglądarka przetwarza CSS do CSSOM, łączy go z DOM, oblicza style i układ, a następnie maluje i składa warstwy na ekranie. JavaScript może zmieniać DOM i uruchamiać kolejne aktualizacje.",
+        step3p: "Przeglądarka przetwarza CSS do CSSOM i łączy go z DOM. Na tej podstawie oblicza style i układ, a potem maluje i składa warstwy na ekranie. JavaScript może zmieniać DOM i wymuszać kolejne aktualizacje.",
         inspectKicker: "Zobacz kod źródłowy",
         inspectTitle: "Każdy zasób ma inną rolę.",
-        inspectCopy: "To pełna zawartość czterech zasobów używanych przez symulację. HTML odwołuje się do pozostałych plików, a podgląd zmienia się zgodnie z odpowiedziami 200 lub 404.",
+        inspectCopy: "To pełna treść czterech plików, których używa symulacja. HTML odwołuje się do pozostałych, a podgląd zmienia się zależnie od tego, czy serwer odpowie 200, czy 404.",
         statusReady: "Gotowe do nawigacji",
         statusReadyDetail: "serwer udostępnia zasoby · uruchom ładowanie strony",
         statusAssembled: "Widok gotowy",
         statusAssembledDetail: "{files} · odebrano {kb} KB · ukończono układ i malowanie",
         statusNoDoc: "Nie otrzymano dokumentu HTML",
         statusNoDocDetail: "404 Not Found dla GET / · nie odkryto odwołań do zasobów",
-        statusChanged: "Zmieniono zasoby — aktualizuję podgląd",
-        statusChangedDetail: "przeglądarka automatycznie ponawia żądania dla aktualnego zestawu",
+        statusChanged: "Zmieniono zasoby: aktualizuję podgląd",
+        statusChangedDetail: "przeglądarka sama ponawia żądania dla aktualnego zestawu",
         statusRequesting: "Żądanie dokumentu HTML",
         statusRequestingDetail: "ustalenie hosta i połączenie HTTPS · GET / HTTP/2",
         statusTransferring: "Odbieranie: {file}",
@@ -1343,7 +1315,7 @@
         fileForms: ["1 zasób", "{n} zasoby", "{n} zasobów"],
         resForms: ["1 zasób", "{n} zasoby", "{n} zasobów"],
         previewIdleTitle: "Nawigacja jeszcze się nie rozpoczęła",
-        previewIdleBody: "Uruchom ładowanie, aby przeglądarka poprosiła serwer o dokument i zaczęła tworzyć widok strony.",
+        previewIdleBody: "Uruchom ładowanie, a przeglądarka poprosi serwer o dokument i zacznie budować widok strony.",
         preview404Title: "Brak dokumentu do wyświetlenia",
         preview404Body: "W tej symulacji serwer odpowiedział 404 na żądanie dokumentu. Bez HTML przeglądarka nie odkryje odwołań do pozostałych zasobów.",
         previewJsNote: "Bez app.js przyciski pozostają nieaktywne.",
@@ -1370,13 +1342,13 @@
         timelineNavigateTitle: "Nawigacja do polana.example",
         timelineNavigateDetail: "Przeglądarka ustala adres hosta, nawiązuje połączenie HTTPS i wysyła GET /.",
         timelineHtmlOkTitle: "index.html: 200 OK",
-        timelineHtmlOkDetail: "Serwer zwraca dokument HTML. Przeglądarka może rozpocząć jego parsowanie jeszcze podczas odbierania danych.",
+        timelineHtmlOkDetail: "Serwer zwraca dokument HTML. Przeglądarka może zacząć go parsować jeszcze w trakcie odbierania danych.",
         timelineHtmlErrorTitle: "index.html: 404 Not Found",
         timelineHtmlErrorDetail: "Żądanie dotarło do serwera, ale dokument nie jest dostępny. Bez jego treści nie da się odkryć odwołań do pozostałych zasobów.",
         timelineParseTitle: "Parser buduje DOM",
         timelineParseDetail: "Przeglądarka zamienia znaczniki HTML w drzewo dokumentu i odnajduje odwołania do styles.css, app.js oraz hero.svg.",
         timelineRequestsTitle: "Trzy kolejne żądania",
-        timelineRequestsDetail: "Przeglądarka prosi o CSS, JavaScript i obraz. Te żądania mogą być obsługiwane równolegle i zakończyć się w różnej kolejności.",
+        timelineRequestsDetail: "Przeglądarka prosi o CSS, JavaScript i obraz. Te żądania mogą biec równolegle i kończyć się w różnej kolejności.",
         timelineResourceOkTitle: "{file}: 200 OK",
         timelineResourceOkDetail: "Odebrano {file} ({kb} KB). Przeglądarka może teraz przetworzyć ten zasób.",
         timelineResourceErrorTitle: "{file}: 404 Not Found",
@@ -1393,10 +1365,10 @@
         paintFailed: "404 · brak dokumentu",
         exchangeSent: "Przeglądarka wysyła",
         exchangeReceived: "Przeglądarka otrzymuje lub tworzy",
-        codeNoNetwork: "— Brak transmisji sieciowej w tym kroku.",
-        codeWaiting: "— Oczekiwanie na odpowiedź serwera.",
-        codeResponsesPending: "— Odpowiedzi mogą nadejść równolegle i w innej kolejności.",
-        codeDomComment: "Wynik parsowania — uproszczone drzewo DOM:",
+        codeNoNetwork: "– Brak transmisji sieciowej w tym kroku.",
+        codeWaiting: "– Oczekiwanie na odpowiedź serwera.",
+        codeResponsesPending: "– Odpowiedzi mogą nadejść równolegle i w innej kolejności.",
+        codeDomComment: "Wynik parsowania, uproszczone drzewo DOM:",
         codeRenderComment: "Wynik lokalnego przetwarzania w silniku renderującym:",
         codeCssLoaded: "CSSOM (styles.css)",
         codeCssMissing: "style domyślne przeglądarki (brak styles.css)",
@@ -1407,14 +1379,12 @@
         codeRenderStages: "drzewo renderowania\n        ↓\nobliczenie stylów\n        ↓\nukład elementów\n        ↓\nmalowanie i składanie warstw"
       },
       en: {
-        docTitle: "How a browser loads a web page — interactive guide",
+        docTitle: "How a browser loads a web page – interactive guide",
         metaDesc: "An interactive simulation of how a browser moves from a URL and HTTP responses to the DOM, CSSOM, layout, and a rendered page.",
-        labLabel: "how browsers work · 01",
-        eyebrow: "From URL to pixels",
         title: "How does a browser load a web page?",
-        lead: "When you navigate to a URL, the browser fetches an HTML document, reads its code, retrieves the resources it references, and processes them into an interactive view.",
+        lead: "When you navigate to a URL, the browser fetches an HTML document, reads its code, pulls in the resources it references, and builds them into a view you can already work with.",
         noteLabel: "Try it:",
-        noteBody: "load the page manually only the first time. Then switch resources on or off—the preview and loading log will update automatically after every change.",
+        noteBody: "load the page manually only the first time. After that, just switch resources on or off: the preview and the loading log update themselves.",
         btnRequest: "Load the page",
         btnReload: "Reload the page",
         btnRequestAria: "Load the page (shortcut: R)",
@@ -1445,22 +1415,22 @@
         pillJsError: "JavaScript · 404",
         pillImageError: "SVG · 404",
         step1t: "Navigation starts with a URL",
-        step1p: "The browser determines where to send the request—using DNS if the address is not already known—opens a connection, and asks the server for a document.",
+        step1p: "The browser works out where to send the request. If it does not know the address yet, it asks DNS. Then it opens a connection and asks the server for a document.",
         step2t: "HTML triggers more fetches",
-        step2p: "The server returns an HTTP response. As HTML bytes arrive, the parser builds the DOM, while references to stylesheets, scripts, and images trigger more requests unless a resource is already cached.",
+        step2p: "The server returns an HTTP response. As HTML bytes arrive, the parser builds the DOM. References to stylesheets, scripts, and images trigger more requests, unless a resource is already cached.",
         step3t: "The rendering engine creates the view",
-        step3p: "The browser processes CSS into the CSSOM, combines it with the DOM, calculates styles and layout, then paints and composites layers on screen. JavaScript can change the DOM and trigger further updates.",
+        step3p: "The browser processes CSS into the CSSOM and combines it with the DOM. From that it calculates styles and layout, then paints and composites layers on screen. JavaScript can change the DOM and force further updates.",
         inspectKicker: "Inspect the source",
         inspectTitle: "Every resource has a different role.",
-        inspectCopy: "These are the complete contents of the four resources used by the simulation. HTML references the other files, and the preview changes according to their 200 or 404 responses.",
+        inspectCopy: "These are the complete contents of the four files the simulation uses. HTML references the others, and the preview changes depending on whether the server answers 200 or 404.",
         statusReady: "Ready to navigate",
         statusReadyDetail: "the server is exposing resources · start loading the page",
         statusAssembled: "View ready",
         statusAssembledDetail: "{files} · {kb} KB received · layout and paint complete",
         statusNoDoc: "No HTML document received",
         statusNoDocDetail: "404 Not Found for GET / · no resource references discovered",
-        statusChanged: "Resources changed — updating the preview",
-        statusChangedDetail: "the browser is automatically repeating requests for the current set",
+        statusChanged: "Resources changed: updating the preview",
+        statusChangedDetail: "the browser is repeating requests for the current set on its own",
         statusRequesting: "Requesting the HTML document",
         statusRequestingDetail: "host resolution and HTTPS connection · GET / HTTP/2",
         statusTransferring: "Receiving {file}",
@@ -1475,7 +1445,7 @@
         fileForms: ["1 resource", "{n} resources", "{n} resources"],
         resForms: ["1 resource", "{n} resources", "{n} resources"],
         previewIdleTitle: "Navigation has not started yet",
-        previewIdleBody: "Start loading so the browser can request a document from the server and begin creating the page view.",
+        previewIdleBody: "Start loading, and the browser will request a document from the server and begin building the page view.",
         preview404Title: "No document to display",
         preview404Body: "In this simulation, the server returned 404 for the document request. Without HTML, the browser will not discover references to the remaining resources.",
         previewJsNote: "Without app.js, the buttons remain inactive.",
@@ -1502,13 +1472,13 @@
         timelineNavigateTitle: "Navigate to polana.example",
         timelineNavigateDetail: "The browser resolves the host, opens an HTTPS connection, and sends GET /.",
         timelineHtmlOkTitle: "index.html: 200 OK",
-        timelineHtmlOkDetail: "The server returns an HTML document. The browser can begin parsing it while more data is still arriving.",
+        timelineHtmlOkDetail: "The server returns an HTML document. The browser can start parsing it while the rest of the data is still arriving.",
         timelineHtmlErrorTitle: "index.html: 404 Not Found",
         timelineHtmlErrorDetail: "The request reached the server, but the document is unavailable. Without its contents, references to the remaining resources cannot be discovered.",
         timelineParseTitle: "The parser builds the DOM",
         timelineParseDetail: "The browser turns HTML markup into a document tree and finds references to styles.css, app.js, and hero.svg.",
         timelineRequestsTitle: "Three more requests",
-        timelineRequestsDetail: "The browser requests the CSS, JavaScript, and image. These requests may run in parallel and finish in a different order.",
+        timelineRequestsDetail: "The browser requests the CSS, JavaScript, and image. These requests can run in parallel and finish in a different order.",
         timelineResourceOkTitle: "{file}: 200 OK",
         timelineResourceOkDetail: "Received {file} ({kb} KB). The browser can now process this resource.",
         timelineResourceErrorTitle: "{file}: 404 Not Found",
@@ -1525,10 +1495,10 @@
         paintFailed: "404 · no document",
         exchangeSent: "Browser sends",
         exchangeReceived: "Browser receives or creates",
-        codeNoNetwork: "— No network transmission occurs during this step.",
-        codeWaiting: "— Waiting for the server response.",
-        codeResponsesPending: "— Responses may arrive in parallel and in a different order.",
-        codeDomComment: "Parsing result — simplified DOM tree:",
+        codeNoNetwork: "– No network transmission occurs during this step.",
+        codeWaiting: "– Waiting for the server response.",
+        codeResponsesPending: "– Responses may arrive in parallel and in a different order.",
+        codeDomComment: "Parsing result, simplified DOM tree:",
         codeRenderComment: "Result of local processing in the rendering engine:",
         codeCssLoaded: "CSSOM (styles.css)",
         codeCssMissing: "browser default styles (styles.css missing)",
@@ -1590,7 +1560,7 @@
     const exchangeReceivedCode = document.getElementById("exchangeReceivedCode");
     const langButtons = [...document.querySelectorAll(".lang-btn")];
 
-    // ─── Simulated website content (teaching subject — deliberately not edulab-styled) ───
+    // ─── Simulated website content (teaching subject – deliberately not edulab-styled) ───
     const imageSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -1904,7 +1874,7 @@ themeButton.addEventListener("click", () => {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>Polana — domki w Beskidzie Niskim</title>
+    <title>Polana – domki w Beskidzie Niskim</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -2056,7 +2026,7 @@ ${t("codeRenderStages")}
         delivered: [],
         responded: [],
         request: "GET /",
-        response: "—",
+        response: "–",
         paintKey: "paintConnecting",
         sentCode: documentRequest,
         receivedCode: t("codeWaiting")
@@ -2304,7 +2274,7 @@ ${t("codeRenderStages")}
         statusDetail.textContent = t("statusReadyDetail");
         paintState.textContent = t("paintIdle");
         requestLine.dataset.request = "GET /";
-        requestLine.dataset.response = "—";
+        requestLine.dataset.response = "–";
         return;
       }
 
